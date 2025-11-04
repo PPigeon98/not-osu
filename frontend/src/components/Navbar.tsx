@@ -1,23 +1,21 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
-  const navigate = useNavigate();
-
   return (
     <>
-      <div className="h-4 w-full absolute bottom-0 -translate-y-4 flex gap-4 p-4 text-[#FFFFFF]">
-        <div className="cursor-pointer hover:underline" onClick={() => navigate("/")}>
-          Start
-        </div>
+      <nav className="h-4 w-full absolute bottom-0 -translate-y-4 flex gap-4 p-4 text-[#FFFFFF]">
+        <Link to="/" className="cursor-pointer hover:underline">
+          Start Menu
+        </Link>
 
-        <div className="cursor-pointer hover:underline" onClick={() => navigate("/select")}>
-          Select Game
-        </div>
+        <Link to="/select" className="cursor-pointer hover:underline">
+          Song Select
+        </Link>
 
-        <div className="cursor-pointer hover:underline" onClick={() => navigate("/game")}>
-          Game Screen
-        </div>
-      </div>
+        <Link to="/game" className="cursor-pointer hover:underline">
+          Game
+        </Link>
+      </nav>
     </>
   )
 }
