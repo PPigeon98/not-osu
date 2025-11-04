@@ -4,13 +4,11 @@
 
 - [ ] Start Menu 
 - [ ] Song Selection
-- [ ] grid /map of game going down
-- [ ] Song Score
+- [ ] Game Screen
+- [ ] Score
 - [ ] Pause Screen
 - [ ] Fail Screen
 - [ ] Win Screen
-- [ ] Progress bar 
-- [ ] Using keys to hit tiles
+- [ ] Progress Bar
 - [ ] Combo
 - [ ] Timing Judgements (OK, GREAT, PERFECT)
-- [ ] Leaderboard
