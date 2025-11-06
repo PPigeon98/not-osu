@@ -20,7 +20,7 @@ app.use(cors());
 // for logging errors (print to terminal)
 app.use(morgan('dev'));
 
-connectDB(); - uncomment once MONGO_URI set up
+connectDB();
 
 const PORT: number = parseInt(process.env.PORT || '5000');
 const HOST: string = process.env.IP || '127.0.0.1';
