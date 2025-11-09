@@ -40,7 +40,7 @@ const PlayerLoader = ({ songInfo, hitObjects, mapPath }: PlayerLoaderProps) => {
     return null;
   }
 
-  return <Game songInfo={songInfo} userData={userData} mapPath={mapPath} />;
+  return <Game songInfo={songInfo} userData={userData} mapPath={mapPath} hitObjects={hitObjects} />;
 };
 
 export default PlayerLoader;

@@ -2,6 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 
 type SongInfo = Record<string, string | number>;
 
+type HitObject = {
+  x: number;
+  y: number;
+  time: number;
+  type: number;
+  hitSound: number;
+};
+
 type UserData = {
   Keybinds: Record<string, string[]>;
   ManiaWidth: Record<string, string>;
@@ -12,15 +20,22 @@ type GameProps = {
   songInfo: SongInfo;
   userData: UserData;
   mapPath: string;
+  hitObjects: HitObject[];
 };
 
-const Game = ({ songInfo, userData, mapPath }: GameProps) => {  
+const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {  
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const musicTime = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const rectangleX = useRef<number>(0); // tmp just for testing
+  const pixelsPerMsRef = useRef<number>(2); // change this into a user data later
+  const currentTimeRef = useRef<number>(0);
+  const lastUiUpdateRef = useRef<number>(0);
+  const smoothedNowMsRef = useRef<number>(0);
+  const lastRafTimeRef = useRef<number>(0);
+  const precomputedColumnsRef = useRef<number[] | null>(null);
+  const sortedTimesRef = useRef<number[] | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -55,30 +70,83 @@ const Game = ({ songInfo, userData, mapPath }: GameProps) => {
 
     const circleSize = songInfo['CircleSize'];
     const maniaWidthKey = String(circleSize);
-    const maniaWidth = userData.ManiaWidth[maniaWidthKey];
+    const laneWidthPx = parseInt(userData.ManiaWidth[maniaWidthKey]);
+    const noteHeightPx = parseInt(userData.ManiaHeight[maniaWidthKey]);
     
-    canvas.width = parseInt(maniaWidth) * parseInt(String(circleSize));
+    canvas.width = laneWidthPx * parseInt(String(circleSize));
     canvas.height = window.innerHeight;
 
-    const rectangleWidth = 50;
-    const rectangleHeight = 50;
-    const speed = 10;
+    const getColumn = (xValue: number) => {
+      return Math.floor(xValue * Number(songInfo['CircleSize']) / 512);
+    };
 
-    const animate = () => {
+    // precompute columns and sorted times
+    const columns: number[] = new Array(hitObjects.length);
+    for (let i = 0; i < hitObjects.length; i++) {
+      columns[i] = getColumn(hitObjects[i].x);
+    }
+    precomputedColumnsRef.current = columns;
+
+    const times = hitObjects.map(o => o.time);
+    sortedTimesRef.current = times;
+
+    smoothedNowMsRef.current = musicTime.current ? musicTime.current.currentTime * 1000 : 0;
+    lastRafTimeRef.current = performance.now();
+
+    const animate = (rafTime?: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (musicTime.current) {
-        setCurrentTime(musicTime.current.currentTime * 1000);
+      const audioNowMs = musicTime.current ? musicTime.current.currentTime * 1000 : currentTimeRef.current;
+      currentTimeRef.current = audioNowMs;
+
+      const nowPerf = typeof rafTime === 'number' ? rafTime : performance.now();
+      if (nowPerf - lastUiUpdateRef.current > 100) {
+        lastUiUpdateRef.current = nowPerf;
+        setCurrentTime(Math.floor(audioNowMs));
       }
 
-      rectangleX.current += speed;
-
-      if (rectangleX.current > canvas.width) {
-        rectangleX.current = -rectangleWidth;
+      const deltaMs = nowPerf - lastRafTimeRef.current;
+      lastRafTimeRef.current = nowPerf;
+      let smoothed = smoothedNowMsRef.current + (deltaMs > 0 && deltaMs < 100 ? deltaMs : 0);
+      const diff = audioNowMs - smoothed;
+      if (Math.abs(diff) > 120) {
+        smoothed = audioNowMs;
+      } else {
+        smoothed += diff * 0.12;
       }
+      smoothedNowMsRef.current = smoothed;
 
+      const now = smoothedNowMsRef.current;
+      const visibleWindowMsPast = 200;
+      const visibleWindowMsFuture = 4000;
+      const pixelsPerMs = pixelsPerMsRef.current;
+
+      // receptor line
+      const receptorY = canvas.height - 120; // change this later
+      ctx.fillStyle = '#444444';
+      ctx.fillRect(0, receptorY, canvas.width, 2);
+
+      // draw each upcoming object
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(rectangleX.current, canvas.height / 2 - rectangleHeight / 2, rectangleWidth, rectangleHeight);
+      const timesArr = sortedTimesRef.current || [];
+      const colsArr = precomputedColumnsRef.current || [];
+
+      let lo = 0, hi = timesArr.length;
+      const lowerBoundTime = now - visibleWindowMsPast;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (timesArr[mid] < lowerBoundTime) lo = mid + 1; else hi = mid;
+      }
+      const upperBoundTime = now + visibleWindowMsFuture;
+      for (let i = lo; i < timesArr.length && timesArr[i] <= upperBoundTime; i++) {
+        const time = timesArr[i];
+        const dt = time - now;
+        const column = colsArr[i] ?? getColumn(hitObjects[i].x);
+        const x = column * laneWidthPx;
+        const y = receptorY - dt * pixelsPerMs;
+        if (y + noteHeightPx < 0 || y > canvas.height) continue;
+        ctx.fillRect(x, y, laneWidthPx, noteHeightPx);
+      }
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };
@@ -90,13 +158,7 @@ const Game = ({ songInfo, userData, mapPath }: GameProps) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [songInfo, userData]);
-
-/*
-  const getColumn = (xValue) => {
-    return Math.floor(xValue * songInfo['CircleSize'] / 512) // clamped between 0 and columnCount - 1
-  }
-*/
+  }, [songInfo, userData, hitObjects]);
 
   return (
     <>
