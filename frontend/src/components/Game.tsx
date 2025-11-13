@@ -18,6 +18,19 @@ type UserData = {
   ReceptorOffset: number;
   BackgroundBlur: number;
   BackgroundOpacity: number;
+  Accuracy: Record<string, number>;
+  Life: Record<string, number>;
+  JudgementWindow: Record<
+    string,
+    {
+      Marvelous: number;
+      Perfect: number;
+      Great: number;
+      Good: number;
+      Bad: number;
+      Miss: number;
+    }
+  >;
 };
 
 type GameProps = {
