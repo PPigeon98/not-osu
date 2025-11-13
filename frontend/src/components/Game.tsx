@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 type SongInfo = Record<string, string | number>;
 
@@ -24,6 +24,7 @@ type UserData = {
   Life: Record<string, number>;
   Judgment: string;
   MusicSpeed: number;
+  ScoreValues: Record<JudgementName, number>;
   JudgementWindow: Record<
     string,
     Record<JudgementName, number>
@@ -37,20 +38,48 @@ type GameProps = {
   hitObjects: HitObject[];
 };
 
-const judgementTypes: JudgementName[] = ['Marvelous', 'Perfect', 'Great', 'Good', 'Okay', 'Miss'];
+const JUDGEMENT_NAMES: JudgementName[] = ['Marvelous', 'Perfect', 'Great', 'Good', 'Okay', 'Miss'];
+const COMBO_EXPONENT = 0.5;
 
-const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {  
-  const [currentTime, setCurrentTime] = useState<number>(0);
-  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
-  const [judgementCounts, setJudgementCounts] = useState<Record<JudgementName, number>>({
+const createEmptyJudgementCounts = (): Record<JudgementName, number> => {
+  const counts: Record<JudgementName, number> = {
     Marvelous: 0,
     Perfect: 0,
     Great: 0,
     Good: 0,
     Okay: 0,
     Miss: 0,
-  });
+  };
+  return counts;
+};
+
+const cloneJudgementCounts = (source: Record<JudgementName, number>): Record<JudgementName, number> => {
+  const copy = createEmptyJudgementCounts();
+  for (const name of JUDGEMENT_NAMES) {
+    copy[name] = source[name];
+  }
+  return copy;
+};
+
+const calculateAccuracyPercent = (
+  counts: Record<JudgementName, number>,
+  weights: Record<string, number>,
+) => {
+  const total = JUDGEMENT_NAMES.reduce((sum, type) => sum + counts[type], 0);
+  if (total === 0) return 100;
+  const weightedSum = JUDGEMENT_NAMES.reduce((sum, type) => sum + (weights[type] ?? 0) * counts[type], 0);
+  return weightedSum / total;
+};
+
+const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {  
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+  const [judgementCounts, setJudgementCounts] = useState<Record<JudgementName, number>>(createEmptyJudgementCounts);
+  const judgementCountsRef = useRef<Record<JudgementName, number>>(createEmptyJudgementCounts());
   const [lastJudgement, setLastJudgement] = useState<{ type: JudgementName; diff: number } | null>(null);
+  const [score, setScore] = useState<number>(0);
+  const [combo, setCombo] = useState<number>(0);
+  const [highestCombo, setHighestCombo] = useState<number>(0);
   const musicTime = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -61,19 +90,69 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   const precomputedColumnsRef = useRef<number[] | null>(null);
   const sortedTimesRef = useRef<number[] | null>(null);
   const judgedNotesRef = useRef<boolean[]>([]);
+  const comboRef = useRef<number>(0);
+  const highestComboRef = useRef<number>(0);
+  const currentBaseScoreRef = useRef<number>(0);
+  const currentMaximumBaseScoreRef = useRef<number>(0);
+  const currentAccuracyJudgementCountRef = useRef<number>(0);
+  const currentComboPortionRef = useRef<number>(0);
 
   const activeJudgementWindow = userData.JudgementWindow[userData.Judgment];
+  const scoreValues = userData.ScoreValues;
 
-  const totalJudgements = judgementTypes.reduce(
-    (sum, type) => sum + judgementCounts[type],
-    0,
-  );
-  const weightedSum = judgementTypes.reduce((sum, type) => {
-    const weight = userData.Accuracy[type];
-    return sum + weight * judgementCounts[type];
-  }, 0);
-  const rawAccuracy = totalJudgements === 0 ? 100 : weightedSum / totalJudgements;
+  const maxBaseScorePerHit = useMemo(() => {
+    let max = 0;
+    for (const name of JUDGEMENT_NAMES) {
+      const value = scoreValues[name];
+      if (value > max) {
+        max = value;
+      }
+    }
+    return max;
+  }, [scoreValues]);
+
+  const maxCombo = hitObjects.length;
+  const maxComboPortion = useMemo(() => {
+    let total = 0;
+    for (let i = 1; i <= maxCombo; i++) {
+      total += maxBaseScorePerHit * Math.pow(i, COMBO_EXPONENT);
+    }
+    return total;
+  }, [maxCombo, maxBaseScorePerHit]);
+  const rawAccuracy = calculateAccuracyPercent(judgementCounts, userData.Accuracy);
   const displayAccuracy = Math.min(100, Math.max(0, rawAccuracy));
+
+  const applyJudgementEffects = useCallback((result: JudgementName) => {
+    if (result === 'Miss') {
+      comboRef.current = 0;
+    } else {
+      comboRef.current += 1;
+    }
+
+    if (comboRef.current > highestComboRef.current) {
+      highestComboRef.current = comboRef.current;
+    }
+
+    setCombo(comboRef.current);
+    setHighestCombo(highestComboRef.current);
+
+    currentAccuracyJudgementCountRef.current += 1;
+    currentMaximumBaseScoreRef.current += maxBaseScorePerHit;
+    currentBaseScoreRef.current += scoreValues[result];
+    currentComboPortionRef.current += maxBaseScorePerHit * Math.pow(comboRef.current, COMBO_EXPONENT);
+
+    const accuracyPercent = calculateAccuracyPercent(judgementCountsRef.current, userData.Accuracy);
+    const accuracyValue = Math.min(100, Math.max(0, accuracyPercent)) / 100;
+    const comboProgress = maxComboPortion > 0 ? currentComboPortionRef.current / maxComboPortion : 1;
+    const accuracyProgress = maxCombo > 0 ? currentAccuracyJudgementCountRef.current / maxCombo : 1;
+
+    const computedScore = Math.round(
+      500000 * accuracyValue * comboProgress +
+      500000 * Math.pow(accuracyValue, 5) * accuracyProgress
+    );
+
+    setScore(computedScore);
+  }, [maxCombo, maxComboPortion, userData.Accuracy, maxBaseScorePerHit, scoreValues]);
 
   const judgeHit = useCallback((column: number) => {
     const windowConfig = activeJudgementWindow;
@@ -149,24 +228,19 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         Miss: prev.Miss,
       };
 
-      if (result === 'Marvelous') {
-        newCounts.Marvelous += 1;
-      } else if (result === 'Perfect') {
-        newCounts.Perfect += 1;
-      } else if (result === 'Great') {
-        newCounts.Great += 1;
-      } else if (result === 'Good') {
-        newCounts.Good += 1;
-      } else if (result === 'Okay') {
-        newCounts.Okay += 1;
-      } else {
-        newCounts.Miss += 1;
-      }
+      if (result === 'Marvelous') newCounts.Marvelous += 1;
+      else if (result === 'Perfect') newCounts.Perfect += 1;
+      else if (result === 'Great') newCounts.Great += 1;
+      else if (result === 'Good') newCounts.Good += 1;
+      else if (result === 'Okay') newCounts.Okay += 1;
+      else newCounts.Miss += 1;
 
+      judgementCountsRef.current = cloneJudgementCounts(newCounts);
       return newCounts;
     });
     setLastJudgement({ type: result, diff: bestSignedDiff });
-  }, [activeJudgementWindow]);
+    applyJudgementEffects(result);
+  }, [activeJudgementWindow, applyJudgementEffects]);
 
   useEffect(() => {
     if (musicTime.current) {
@@ -215,16 +289,20 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   }, [judgeHit, songInfo, userData]);
 
   useEffect(() => {
-    setJudgementCounts({
-      Marvelous: 0,
-      Perfect: 0,
-      Great: 0,
-      Good: 0,
-      Okay: 0,
-      Miss: 0,
-    });
+    const resetCounts = createEmptyJudgementCounts();
+    setJudgementCounts(resetCounts);
+    judgementCountsRef.current = cloneJudgementCounts(resetCounts);
     setLastJudgement(null);
     judgedNotesRef.current = new Array(hitObjects.length).fill(false);
+    comboRef.current = 0;
+    highestComboRef.current = 0;
+    currentBaseScoreRef.current = 0;
+    currentMaximumBaseScoreRef.current = 0;
+    currentAccuracyJudgementCountRef.current = 0;
+    currentComboPortionRef.current = 0;
+    setCombo(0);
+    setHighestCombo(0);
+    setScore(0);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -313,7 +391,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         const dt = time - now;
         const column = colsArr[i];
         const x = column * laneWidthPx;
-        if (missWindow !== null && dt < -missWindow) {
+        if (dt < -missWindow) {
           judgedArr[i] = true;
           setJudgementCounts(prev => {
             const newCounts: Record<JudgementName, number> = {
@@ -325,9 +403,11 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
               Miss: prev.Miss,
             };
             newCounts.Miss += 1;
+            judgementCountsRef.current = cloneJudgementCounts(newCounts);
             return newCounts;
           });
           setLastJudgement({ type: 'Miss', diff: dt });
+          applyJudgementEffects('Miss');
           continue;
         }
         const y = receptorY - noteHeightPx - dt * pixelsPerMs;
@@ -345,7 +425,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [songInfo, userData, hitObjects]);
+  }, [songInfo, userData, hitObjects, applyJudgementEffects]);
 
   return (
     <>
@@ -384,12 +464,15 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
             ? `${lastJudgement.type} (${lastJudgement.diff.toFixed(2)}ms)`
             : 'None'}
         </p>
-        {judgementTypes.map(type => (
+        {JUDGEMENT_NAMES.map(type => (
           <p key={type}>
             {type}: {judgementCounts[type]}
           </p>
         ))}
         <p>Accuracy: {`${displayAccuracy.toFixed(2)}%`}</p>
+        <p>Score: {score}</p>
+        <p>Combo: {combo}</p>
+        <p>Highest combo: {highestCombo}</p>
       </div>
 
 
