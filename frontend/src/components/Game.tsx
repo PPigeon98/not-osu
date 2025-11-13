@@ -175,6 +175,16 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
+
+       if (key === 'escape') {
+         const audio = musicTime.current;
+         if (audio) {
+           if (audio.paused) audio.play();
+           else audio.pause();
+         }
+         return;
+       }
+
       setPressedKeys(prev => new Set(prev).add(key));
 
       const circleSize = songInfo['CircleSize'];
