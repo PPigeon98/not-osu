@@ -90,6 +90,8 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   const precomputedColumnsRef = useRef<number[] | null>(null);
   const sortedTimesRef = useRef<number[] | null>(null);
   const judgedNotesRef = useRef<boolean[]>([]);
+  const laneWidthPxRef = useRef<number>(0);
+  const noteHeightPxRef = useRef<number>(0);
   const comboRef = useRef<number>(0);
   const highestComboRef = useRef<number>(0);
   const currentBaseScoreRef = useRef<number>(0);
@@ -312,8 +314,13 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
 
     const circleSize = songInfo['CircleSize'];
     const maniaWidthKey = String(circleSize);
-    const laneWidthPx = parseInt(userData.ManiaWidth[maniaWidthKey]);
-    const noteHeightPx = parseInt(userData.ManiaHeight[maniaWidthKey]);
+    const laneWidthPercent = parseFloat(userData.ManiaWidth[maniaWidthKey]);
+    const laneWidthPx = (laneWidthPercent / 100) * window.innerWidth;
+    const noteHeightPercent = parseFloat(userData.ManiaHeight[maniaWidthKey]);
+    const noteHeightPx = (noteHeightPercent / 100) * window.innerHeight;
+    
+    laneWidthPxRef.current = laneWidthPx;
+    noteHeightPxRef.current = noteHeightPx;
     
     canvas.width = laneWidthPx * parseInt(String(circleSize));
     canvas.height = window.innerHeight;
@@ -390,7 +397,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         const time = timesArr[i];
         const dt = time - now;
         const column = colsArr[i];
-        const x = column * laneWidthPx;
+        const x = column * laneWidthPxRef.current;
         if (dt < -missWindow) {
           judgedArr[i] = true;
           setJudgementCounts(prev => {
@@ -410,9 +417,9 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
           applyJudgementEffects('Miss');
           continue;
         }
-        const y = receptorY - noteHeightPx - dt * pixelsPerMs;
-        if (y + noteHeightPx < 0 || y > canvas.height) continue;
-        ctx.fillRect(x, y, laneWidthPx, noteHeightPx);
+        const y = receptorY - noteHeightPxRef.current - dt * pixelsPerMs;
+        if (y + noteHeightPxRef.current < 0 || y > canvas.height) continue;
+        ctx.fillRect(x, y, laneWidthPxRef.current, noteHeightPxRef.current);
       }
 
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -420,10 +427,30 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
 
     animate();
 
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const circleSize = songInfo['CircleSize'];
+      const maniaWidthKey = String(circleSize);
+      const laneWidthPercent = parseFloat(userData.ManiaWidth[maniaWidthKey]);
+      const laneWidthPx = (laneWidthPercent / 100) * window.innerWidth;
+      const noteHeightPercent = parseFloat(userData.ManiaHeight[maniaWidthKey]);
+      const noteHeightPx = (noteHeightPercent / 100) * window.innerHeight;
+      
+      laneWidthPxRef.current = laneWidthPx;
+      noteHeightPxRef.current = noteHeightPx;
+      canvas.width = laneWidthPx * parseInt(String(circleSize));
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      window.removeEventListener('resize', handleResize);
     };
   }, [songInfo, userData, hitObjects, applyJudgementEffects]);
 

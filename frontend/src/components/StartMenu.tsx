@@ -15,6 +15,7 @@ const StartMenu = () => {
         </Button>
         <Button onClick={handleOpen}>Settings</Button>
         <Modal onClose={handleClose} open={open}>
+          {/* all the settings are in playerloader.tsx but it could be split into more components */}
           <h2 className="text-[#FFFFFF]">hello settings here</h2>
         </Modal>
       </main>
