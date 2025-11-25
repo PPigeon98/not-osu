@@ -15,6 +15,10 @@ const Navbar = () => {
         <Link to="/game" className="cursor-pointer hover:underline">
           Game
         </Link>
+
+        <Link to="/gameover" className="cursor-pointer hover:underline">
+          Game Over
+        </Link>
       </nav>
     </>
   )

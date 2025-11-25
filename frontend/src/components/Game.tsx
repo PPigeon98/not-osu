@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type SongInfo = Record<string, string | number>;
 
@@ -72,6 +73,7 @@ const calculateAccuracyPercent = (
 };
 
 const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {  
+  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const [judgementCounts, setJudgementCounts] = useState<Record<JudgementName, number>>(createEmptyJudgementCounts);
@@ -80,6 +82,8 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   const [score, setScore] = useState<number>(0);
   const [combo, setCombo] = useState<number>(0);
   const [highestCombo, setHighestCombo] = useState<number>(0);
+  const [life, setLife] = useState<number>(100);
+  const lifeRef = useRef<number>(100);
   const musicTime = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -138,6 +142,10 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     setCombo(comboRef.current);
     setHighestCombo(highestComboRef.current);
 
+    const lifeChange = userData.Life[result] || 0;
+    lifeRef.current = Math.max(0, Math.min(100, lifeRef.current + lifeChange));
+    setLife(lifeRef.current);
+
     currentAccuracyJudgementCountRef.current += 1;
     currentMaximumBaseScoreRef.current += maxBaseScorePerHit;
     currentBaseScoreRef.current += scoreValues[result];
@@ -154,7 +162,19 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     );
 
     setScore(computedScore);
-  }, [maxCombo, maxComboPortion, userData.Accuracy, maxBaseScorePerHit, scoreValues]);
+
+    // check if life is <= 0 and navigate to game over
+    if (lifeRef.current <= 0) {
+      const finalAccuracy = Math.min(100, Math.max(0, accuracyPercent));
+      navigate('/gameover', {
+        state: {
+          score: computedScore,
+          accuracy: finalAccuracy,
+          highestCombo: highestComboRef.current,
+        },
+      });
+    }
+  }, [maxCombo, maxComboPortion, userData.Accuracy, userData.Life, maxBaseScorePerHit, scoreValues, navigate]);
 
   const judgeHit = useCallback((column: number) => {
     const windowConfig = activeJudgementWindow;
@@ -305,6 +325,8 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     setCombo(0);
     setHighestCombo(0);
     setScore(0);
+    setLife(100);
+    lifeRef.current = 100;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -483,6 +505,10 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
       <div>
         <p>Currently pressed keys: {Array.from(pressedKeys).join(', ') || 'None'}</p>
         <p>Number of keys pressed: {pressedKeys.size}</p>
+      </div>
+
+      <div>
+        <p>Life: {life.toFixed(1)}</p>
       </div>
 
       <div>
