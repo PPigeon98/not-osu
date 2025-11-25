@@ -11,7 +11,7 @@ const SongSelect = () => {
         <span className="text-3xl">Select a song!</span>
 
         {/* somehow read all .osu files in the beatmapsRaw folder and display them in a list */}
-        {/* and somehow send the file name to the game */}
+        {/* and send the file name to the game using location.state */}
         {/* parsing file data has been done in maploader.tsx */}
         {/* probs need to split that and make a component that would work in song select and maploader */}
         <Link to="/game" className="cursor-pointer hover:underline">
