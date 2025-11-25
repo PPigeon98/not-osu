@@ -16,7 +16,7 @@ type UserData = {
   ManiaWidth: Record<string, string>;
   ManiaHeight: Record<string, string>;
   ScrollSpeed: number;
-  ReceptorOffset: number;
+  ReceptorOffset: string;
   BackgroundBlur: number;
   BackgroundOpacity: number;
   Accuracy: Record<string, number>;
@@ -100,8 +100,8 @@ const PlayerLoader = ({ songInfo, hitObjects, mapPath }: PlayerLoaderProps) => {
         '18': '4.00',
         '20': '4.00',
       },
-      ScrollSpeed: 2,
-      ReceptorOffset: 120,
+      ScrollSpeed: 2.5,
+      ReceptorOffset: '11.11',
       BackgroundBlur: 5,
       BackgroundOpacity: 0.6,
       JudgementWindow: {

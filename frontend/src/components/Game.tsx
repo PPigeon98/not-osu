@@ -18,7 +18,7 @@ type UserData = {
   ManiaWidth: Record<string, string>;
   ManiaHeight: Record<string, string>;
   ScrollSpeed: number;
-  ReceptorOffset: number;
+  ReceptorOffset: string;
   BackgroundBlur: number;
   BackgroundOpacity: number;
   Accuracy: Record<string, number>;
@@ -392,10 +392,14 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
       const now = smoothedNowMsRef.current;
       const visibleWindowMsPast = 200;
       const visibleWindowMsFuture = 4000;
-      const pixelsPerMs = userData.ScrollSpeed;
+      const baseHeight = 1080;
+      const scrollSpeedScale = window.innerHeight / baseHeight;
+      const pixelsPerMs = userData.ScrollSpeed * scrollSpeedScale;
 
       // receptor line
-      const receptorY = canvas.height - userData.ReceptorOffset;
+      const receptorOffsetPercent = parseFloat(userData.ReceptorOffset);
+      const receptorOffsetPx = (receptorOffsetPercent / 100) * window.innerHeight;
+      const receptorY = canvas.height - receptorOffsetPx;
       ctx.fillStyle = '#444444';
       ctx.fillRect(0, receptorY, canvas.width, 2);
 
