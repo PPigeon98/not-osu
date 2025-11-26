@@ -6,7 +6,7 @@ type HitObject = {
   y: number;
   time: number;
   type: number;
-  hitSound: number;
+  endTime?: number;
 };
 
 type SongInfo = Record<string, string | number>;
@@ -171,7 +171,7 @@ const PlayerLoader = ({ songInfo, hitObjects, mapPath }: PlayerLoaderProps) => {
         },
       },
       Accuracy: { Marvelous: 100, Perfect: 98.25, Great: 65, Good: 25, Okay: -50, Miss: -100 },
-      Life: { Marvelous: 2.5, Perfect: 2, Great: 1, Good: 0, Okay: -2.5, Miss: -10 },
+      Life: { Marvelous: 2.5, Perfect: 2, Great: 1, Good: 0, Okay: -0.5, Miss: -2 },
       Judgment: 'Standard',
       MusicSpeed: 1,
       ScoreValues: { Marvelous: 300, Perfect: 300, Great: 200, Good: 100, Okay: 50, Miss: 0 },

@@ -8,7 +8,7 @@ type HitObject = {
   y: number;
   time: number;
   type: number;
-  hitSound: number;
+  endTime?: number;
 };
 
 type JudgementName = 'Marvelous' | 'Perfect' | 'Great' | 'Good' | 'Okay' | 'Miss';

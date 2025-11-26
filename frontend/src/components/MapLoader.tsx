@@ -6,7 +6,7 @@ type HitObject = {
   y: number;
   time: number;
   type: number;
-  hitSound: number;
+  endTime?: number;
 };
 
 type SongInfo = Record<string, string | number>;
@@ -17,8 +17,8 @@ type MapLoaderProps = {
 };
 
 const MapLoader = ({ 
-  mapPath = './beatmapsRaw/200552/', 
-  mapFileName = 'BlackYooh vs. siromaru - BLACK or WHITE (DE-CADE) [ADVANCED Lv.12].osu' 
+  mapPath = './beatmapsRaw/2329509/', 
+  mapFileName = "KURORYU vs. Dispel - Miserea (-[ Peachy ]-) [Draft vs. Stelar's 4K Hard].osu"
 }: MapLoaderProps) => {
   const [hitObjects, setHitObjects] = useState<HitObject[] | null>(null);
   const [songInfo, setSongInfo] = useState<SongInfo | null>(null);
@@ -54,12 +54,24 @@ const MapLoader = ({
         if (trimmed && !trimmed.startsWith('//')) {
           const parts = trimmed.split(',');
           if (parts.length >= 4) {
+            const type = parseInt(parts[3]);
+            let endTime: number | undefined;
+
+            const isManiaHold = (type & 128) !== 0;
+            if (isManiaHold && parts.length >= 6) {
+              const endPart = parts[5].split(':')[0];
+              const parsedEnd = parseInt(endPart);
+              if (!Number.isNaN(parsedEnd)) {
+                endTime = parsedEnd;
+              }
+            }
+
             hitObjects.push({
               x: parseInt(parts[0]),
               y: parseInt(parts[1]),
               time: parseInt(parts[2]),
-              type: parseInt(parts[3]),
-              hitSound: parseInt(parts[4])
+              type,
+              endTime,
             });
           }
         }
