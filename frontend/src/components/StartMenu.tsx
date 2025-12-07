@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button, Modal } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
+import Settings from "./Settings";
 
 const StartMenu = () => {
-  const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const [openSettings, setOpenSettings] = useState(false);
+  const handleOpenSettings = () => setOpenSettings(true);
   return (
     <>
       <main className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF]">
@@ -13,11 +13,12 @@ const StartMenu = () => {
         <Button variant="contained">
           <Link to="/select">Start!</Link>
         </Button>
-        <Button onClick={handleOpen}>Settings</Button>
-        <Modal onClose={handleClose} open={open}>
-          {/* all the settings are in playerloader.tsx but it could be split into more components */}
-          <h2 className="text-[#FFFFFF]">hello settings here</h2>
-        </Modal>
+        <Button onClick={handleOpenSettings}>Settings</Button>
+        {/* all the settings are in playerloader.tsx but it could be split into more components */}
+        <Settings
+          open={openSettings}
+          onClose={() => setOpenSettings(false)}
+        ></Settings>
       </main>
     </>
   );
