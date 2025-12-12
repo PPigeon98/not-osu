@@ -38,6 +38,7 @@ const SongSelect = () => {
 
         <span className="text-3xl">Select a song!</span>
 
+        {/* use maploader to parse the data */}
         <div className="flex flex-col w-full h-[70%] overflow-y-auto text-center gap-2 mt-5">
           {beatmaps.map((beatmap, i) => (
             <Link

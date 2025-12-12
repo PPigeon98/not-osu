@@ -55,8 +55,7 @@ const MapLoader = () => {
             const type = parseInt(parts[3]);
             let endTime: number | undefined;
 
-            const isManiaHold = (type & 128) !== 0;
-            if (isManiaHold && parts.length >= 6) {
+            if (type === 7 && parts.length >= 6) {
               const endPart = parts[5].split(':')[0];
               const parsedEnd = parseInt(endPart);
               if (!Number.isNaN(parsedEnd)) {
