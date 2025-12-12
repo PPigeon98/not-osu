@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Button, Modal } from "@mui/material";
-import { useState, useEffect, useRef } from "react";
+import { Button } from "@mui/material";
+import { useState } from "react";
 import Settings from "./Settings";
 
 const StartMenu = () => {

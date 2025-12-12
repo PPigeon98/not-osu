@@ -1,11 +1,11 @@
 // import React from "react";
-import { Button, Modal, Slider, styled, Typography } from "@mui/material";
+import { Button, Modal, Slider, Typography } from "@mui/material";
 // import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 // import VolumeMuteIcon from "@mui/icons-material/VolumeMute";
-import { useState, useEffect, useRef } from "react";
+// import { useState, useEffect, useRef } from "react";
 import useSound from "use-sound";
-import buttonHover1 from "../../public/button_hover_1.wav";
-import buttonClick1 from "../../public/button_click_1.wav";
+import buttonHover1 from "../../public/sounds/button_hover_1.wav";
+import buttonClick1 from "../../public/sounds/button_click_1.wav";
 
 type SettingsProps = {
   open: boolean;
