@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Keypresses from './Keypresses';
 import {
-  JUDGEMENT_NAMES,
   type HitObject,
   type SongInfo,
   type UserData,
@@ -40,7 +39,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     judgedNotesRef,
   );
 
-  const { judgementCounts, lastJudgement, score, combo, highestCombo, life, displayAccuracy } = judgingState;
+  const { score, highestCombo, life, displayAccuracy } = judgingState;
   const { judgeHit, markMiss, resetJudging } = judgingControls;
 
   const activeJudgementWindow = userData.JudgementWindow[userData.Judgment];
@@ -167,20 +166,9 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
       </div>
 
       <div>
-        <p>
-          Last judgement: {lastJudgement
-            ? `${lastJudgement.type} (${lastJudgement.diff.toFixed(2)}ms)`
-            : 'None'}
-        </p>
-        {JUDGEMENT_NAMES.map(type => (
-          <p key={type}>
-            {type}: {judgementCounts[type]}
-          </p>
-        ))}
         <p>Accuracy: {`${displayAccuracy.toFixed(2)}%`}</p>
         <p>Score: {score}</p>
-        <p>Combo: {combo}</p>
-        <p>Highest combo: {highestCombo}</p>
+        <p>Combo: {highestCombo}</p>
       </div>
 
 
