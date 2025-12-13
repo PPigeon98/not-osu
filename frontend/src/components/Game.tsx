@@ -21,6 +21,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+  const [progress, setProgress] = useState<number>(0);
   const musicTime = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const currentTimeRef = useRef<number>(0);
@@ -40,7 +41,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     judgedNotesRef,
   );
 
-  const { score, highestCombo, life, displayAccuracy } = judgingState;
+  const { score, highestCombo, life, displayAccuracy, lastJudgement, combo } = judgingState;
   const { judgeHit, judgeTaiko, markMiss, resetJudging } = judgingControls;
 
   const activeJudgementWindow = userData.JudgementWindow[userData.Judgment];
@@ -117,6 +118,22 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     musicTime.current.volume = musicVolume / 100;
   }, [musicVolume]);
 
+  useEffect(() => {
+    const updateProgress = () => {
+      const audio = musicTime.current;
+      if (audio && audio.duration) {
+        const currentProgress = (audio.currentTime / audio.duration) * 100;
+        setProgress(currentProgress);
+      }
+    };
+
+    const audio = musicTime.current;
+    if (audio) {
+      audio.addEventListener('timeupdate', updateProgress);
+      return () => audio.removeEventListener('timeupdate', updateProgress);
+    }
+  }, []);
+
   if (songInfo['Mode'] === '1') {
     TaikoRenderer({
       songInfo,
@@ -169,7 +186,6 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         ref={musicTime}
         src={mapPath + songInfo['AudioFilename']}
         autoPlay
-        controls
         onEnded={() => {
           navigate('/passedmap', {
             state: {
@@ -181,27 +197,6 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         }}
       />
 
-      <h1>hi</h1>
-
-      <div>
-        Current Time: {currentTime}ms
-      </div>
-
-      <div>
-        <p>Currently pressed keys: {Array.from(pressedKeys).join(', ') || 'None'}</p>
-        <p>Number of keys pressed: {pressedKeys.size}</p>
-      </div>
-
-      <div>
-        <p>Life: {life.toFixed(1)}</p>
-      </div>
-
-      <div>
-        <p>Accuracy: {`${displayAccuracy.toFixed(2)}%`}</p>
-        <p>Score: {score}</p>
-        <p>Combo: {highestCombo}</p>
-      </div>
-
 
 
       <main className="absolute top-0 flex justify-center items-center w-screen h-screen text-[#FFFFFF] pointer-events-none">
@@ -209,6 +204,31 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
           ref={canvasRef}
           className="bg-black"
         />
+        {lastJudgement && lastJudgement.type !== 'Miss' && (
+          <div className="absolute top-[20%] left-1/2 transform -translate-x-1/2 text-center pointer-events-none">
+            <div className="text-[4vw] font-bold mb-0">{lastJudgement.type}</div>
+            <div className="text-[1.8vw]">{Math.round(lastJudgement.diff)}ms</div>
+          </div>
+        )}
+        <div className="absolute bottom-4 left-4 text-[8vw] font-bold pointer-events-none">
+          {combo}x
+        </div>
+        <div className="absolute top-4 left-4 w-[20vw] h-[2vw] bg-black-800 border-2 border-white pointer-events-none">
+          <div 
+            className="h-full bg-green-500 transition-all duration-100"
+            style={{ width: `${life}%` }}
+          />
+        </div>
+        <div className="absolute top-0 right-4 text-right pointer-events-none">
+          <div className="text-[4vw] font-bold">{score.toLocaleString()}</div>
+          <div className="text-[2vw] font-bold">{displayAccuracy.toFixed(2)}%</div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-[1vw] bg-gray-800 pointer-events-none">
+          <div 
+            className="h-full bg-white transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </main>
       <Keypresses onKeyDown={handleKeyDown} onKeyUp={handleKeyUp} />
     </>
