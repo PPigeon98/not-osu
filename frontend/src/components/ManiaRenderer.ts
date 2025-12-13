@@ -142,7 +142,7 @@ export const ManiaRenderer = ({
         ctx.fillRect(x, gradientStartY, width, gradientEndY - gradientStartY);
       }
       
-      ctx.fillStyle = '#444444';
+      ctx.fillStyle = '#11111B';
       ctx.fillRect(0, receptorY, canvas.width, 2);
 
       ctx.fillStyle = '#FFFFFF';
@@ -185,19 +185,19 @@ export const ManiaRenderer = ({
           const middleCol1 = Math.floor(centerPoint);
           const middleCol2 = Math.ceil(centerPoint);
           if (column === middleCol1 || column === middleCol2) {
-            ctx.fillStyle = '#CBA6F7';
+            ctx.fillStyle = '#934AB3';
           } else if (roundedDistance % 2 === 1) {
-            ctx.fillStyle = '#F5C2E7';
+            ctx.fillStyle = '#EF4444';
           } else {
-            ctx.fillStyle = '#89B4FA';
+            ctx.fillStyle = '#60A5FA';
           }
         } else {
           if (isOdd && roundedDistance === 0) {
-            ctx.fillStyle = '#CBA6F7';
+            ctx.fillStyle = '#934AB3';
           } else if (roundedDistance % 2 === 1) {
-            ctx.fillStyle = '#F5C2E7';
+            ctx.fillStyle = '#EF4444';
           } else {
-            ctx.fillStyle = '#89B4FA';
+            ctx.fillStyle = '#60A5FA';
           }
         }
         

@@ -40,7 +40,10 @@ const UploadBeatmap = () => {
     <div className="mt-2 flex flex-col items-center gap-2 text-white">
       <button
         onClick={handleButtonClick}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+        className="px-4 py-2 rounded transition-colors"
+        style={{ backgroundColor: '#60A5FA', color: '#11111B' }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#60A5FA'}
       >
         Upload Beatmap (.osz)
       </button>

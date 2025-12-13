@@ -239,15 +239,15 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         </div>
         <div className="absolute top-4 left-4 w-[20vw] h-[2vw] bg-black-800 border-2 border-white pointer-events-none">
           <div 
-            className="h-full bg-green-500 transition-all duration-100"
-            style={{ width: `${life}%` }}
+            className="h-full transition-all duration-100"
+            style={{ width: `${life}%`, backgroundColor: '#934AB3' }}
           />
         </div>
         <div className="absolute top-0 right-4 text-right pointer-events-none">
           <div className="text-[4vw] font-bold">{score.toLocaleString()}</div>
           <div className="text-[2vw] font-bold">{displayAccuracy.toFixed(2)}%</div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-[1vw] bg-gray-800 pointer-events-none">
+        <div className="absolute bottom-0 left-0 right-0 h-[1vw] pointer-events-none" style={{ backgroundColor: '#11111B' }}>
           <div 
             className="h-full bg-white transition-all duration-100"
             style={{ width: `${progress}%` }}
