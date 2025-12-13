@@ -62,7 +62,10 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   }, [life, navigate]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    const key = event.key.toLowerCase();
+    let key = event.key.toLowerCase();
+    if (key === ' ') {
+      key = 'space';
+    }
 
     if (key === 'escape') {
       const audio = musicTime.current;
@@ -100,9 +103,13 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   }, [judgeHit, judgeTaiko, songInfo, userData, hitObjects]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    let key = event.key.toLowerCase();
+    if (key === ' ') {
+      key = 'space';
+    }
     setPressedKeys(prev => {
       const newKeys = new Set(prev);
-      newKeys.delete(event.key.toLowerCase());
+      newKeys.delete(key);
       return newKeys;
     });
   }, []);

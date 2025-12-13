@@ -127,7 +127,7 @@ export const TaikoRenderer = ({
 
         const noteRadius = canvas.height * 0.35;
         const strokeWidth = noteRadius * 0.1;
-        ctx.fillStyle = isKat ? '#4A90E2' : '#FF6B6B';
+        ctx.fillStyle = isKat ? '#89B4FA' : '#F5C2E7';
         ctx.beginPath();
         ctx.arc(x, centerY, noteRadius, 0, Math.PI * 2);
         ctx.fill();

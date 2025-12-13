@@ -144,6 +144,20 @@ export const ManiaRenderer = ({
         }
         const y = receptorY - noteHeightPxRef.current - dt * pixelsPerMs;
         if (y + noteHeightPxRef.current < 0 || y > canvas.height) continue;
+        
+        const numColumns = parseInt(String(circleSize));
+        const isOdd = numColumns % 2 === 1;
+        const centerPoint = (numColumns - 1) / 2;
+        const distanceFromCenter = Math.abs(column - centerPoint);
+        const roundedDistance = Math.round(distanceFromCenter);
+        
+        if (isOdd && roundedDistance === 0) {
+          ctx.fillStyle = '#CBA6F7';
+        } else if (roundedDistance % 2 === 1) {
+          ctx.fillStyle = '#F5C2E7';
+        } else {
+          ctx.fillStyle = '#89B4FA';
+        }
         ctx.fillRect(x, y, laneWidthPxRef.current, noteHeightPxRef.current);
       }
 

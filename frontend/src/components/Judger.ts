@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
-  JUDGEMENT_NAMES,
   calculateAccuracyPercent,
   cloneJudgementCounts,
   createEmptyJudgementCounts,
@@ -43,33 +42,13 @@ export const Judger = (
   const lifeRef = useRef<number>(100);
   const comboRef = useRef<number>(0);
   const highestComboRef = useRef<number>(0);
-  const currentBaseScoreRef = useRef<number>(0);
-  const currentMaximumBaseScoreRef = useRef<number>(0);
+  const scoreRef = useRef<number>(0);
   const currentAccuracyJudgementCountRef = useRef<number>(0);
-  const currentComboPortionRef = useRef<number>(0);
 
   const activeJudgementWindow = userData.JudgementWindow[userData.Judgment];
   const scoreValues = userData.ScoreValues;
   const maxCombo = hitObjects.length;
-
-  const maxBaseScorePerHit = useMemo(() => {
-    let max = 0;
-    for (const name of JUDGEMENT_NAMES) {
-      const value = scoreValues[name];
-      if (value > max) {
-        max = value;
-      }
-    }
-    return max;
-  }, [scoreValues]);
-
-  const maxComboPortion = useMemo(() => {
-    let total = 0;
-    for (let i = 1; i <= maxCombo; i++) {
-      total += maxBaseScorePerHit * Math.pow(i, 0.5);
-    }
-    return total;
-  }, [maxCombo, maxBaseScorePerHit]);
+  const TotalNotes = maxCombo;
 
   const calculateJudgement = (absDiff: number, windowConfig: UserData['JudgementWindow'][string]): JudgementName => {
     if (absDiff <= windowConfig.Marvelous) return 'Marvelous';
@@ -99,22 +78,13 @@ export const Judger = (
     setLife(lifeRef.current);
 
     currentAccuracyJudgementCountRef.current += 1;
-    currentMaximumBaseScoreRef.current += maxBaseScorePerHit;
-    currentBaseScoreRef.current += scoreValues[result];
-    currentComboPortionRef.current += maxBaseScorePerHit * Math.pow(comboRef.current, 0.5);
 
-    const accuracyPercent = calculateAccuracyPercent(judgementCountsRef.current, userData.Accuracy);
-    const accuracyValue = Math.min(100, Math.max(0, accuracyPercent)) / 100;
-    const comboProgress = maxComboPortion > 0 ? currentComboPortionRef.current / maxComboPortion : 1;
-    const accuracyProgress = maxCombo > 0 ? currentAccuracyJudgementCountRef.current / maxCombo : 1;
+    const HitValue = scoreValues[result];
+    const hitScore = (1000000 * 0.5 / TotalNotes) * (HitValue / scoreValues.Marvelous);
+    scoreRef.current += hitScore;
 
-    const computedScore = Math.round(
-      500000 * accuracyValue * comboProgress +
-      500000 * Math.pow(accuracyValue, 5) * accuracyProgress
-    );
-
-    setScore(computedScore);
-  }, [maxCombo, maxComboPortion, userData.Accuracy, userData.Life, maxBaseScorePerHit, scoreValues]);
+    setScore(Math.round(scoreRef.current));
+  }, [maxCombo, userData.Life, scoreValues]);
 
   const updateJudgementCounts = useCallback((result: JudgementName, diff: number) => {
     setJudgementCounts(prev => {
@@ -249,10 +219,8 @@ export const Judger = (
     judgedNotesRef.current = new Array(noteCount).fill(false);
     comboRef.current = 0;
     highestComboRef.current = 0;
-    currentBaseScoreRef.current = 0;
-    currentMaximumBaseScoreRef.current = 0;
+    scoreRef.current = 0;
     currentAccuracyJudgementCountRef.current = 0;
-    currentComboPortionRef.current = 0;
     setCombo(0);
     setHighestCombo(0);
     setScore(0);
