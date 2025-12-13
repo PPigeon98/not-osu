@@ -30,6 +30,7 @@ const PlayerLoader = ({ songInfo, hitObjects, mapPath }: PlayerLoaderProps) => {
         '16': ['s', 'd', 'f', 'g', 'x', 'c', 'v', 'b', 'space', 'Numpad0', 'Numpad4', 'Numpad5', 'Numpad6', 'NumpadAdd', 'Numpad1', 'Numpad2'],
         '18': ['s', 'd', 'f', 'g', 'x', 'c', 'v', 'b', 'space', 'Numpad0', 'Numpad4', 'Numpad5', 'Numpad6', 'NumpadAdd', 'Numpad1', 'Numpad2', 'Numpad3'],
         '20': ['s', 'd', 'f', 'g', 't', 'x', 'c', 'v', 'b', 'space', 'Numpad0', 'Numpad4', 'Numpad5', 'Numpad6', 'Numpad7', 'NumpadAdd', 'Numpad1', 'Numpad2', 'Numpad3'],
+        'taiko': ['d', 'f', 'j', 'k'],
       },
       ManiaWidth: {
         '1': '12.70',
@@ -66,6 +67,7 @@ const PlayerLoader = ({ songInfo, hitObjects, mapPath }: PlayerLoaderProps) => {
         '20': '4.00',
       },
       ScrollSpeed: 2.5,
+      TaikoScrollSpeed: 1.2,
       ReceptorOffset: '11.11',
       TaikoReceptorOffset: '8',
       BackgroundBlur: 5,

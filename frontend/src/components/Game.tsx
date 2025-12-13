@@ -41,7 +41,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   );
 
   const { score, highestCombo, life, displayAccuracy } = judgingState;
-  const { judgeHit, markMiss, resetJudging } = judgingControls;
+  const { judgeHit, judgeTaiko, markMiss, resetJudging } = judgingControls;
 
   const activeJudgementWindow = userData.JudgementWindow[userData.Judgment];
 
@@ -74,16 +74,29 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
 
     setPressedKeys(prev => new Set(prev).add(key));
 
-    const circleSize = songInfo['CircleSize'];
-    const maniaWidthKey = String(circleSize);
-    const keybinds = userData.Keybinds[maniaWidthKey].map(k => k.toLowerCase());
-    const column = keybinds.indexOf(key);
+    const isTaikoMode = songInfo['Mode'] === 1 || songInfo['Mode'] === '1';
+
+    if (isTaikoMode) {
+      const taikoKeybinds = userData.Keybinds['taiko'].map(k => k.toLowerCase());
+      const keyIndex = taikoKeybinds.indexOf(key);
+
+      if (keyIndex !== -1) {
+        const now = musicTime.current ? musicTime.current.currentTime * 1000 : currentTimeRef.current;
+        const isKat = keyIndex === 0 || keyIndex === 3;
+        judgeTaiko(isKat, now, hitObjects);
+      }
+    } else {
+      const circleSize = songInfo['CircleSize'];
+      const maniaWidthKey = String(circleSize);
+      const keybinds = userData.Keybinds[maniaWidthKey].map(k => k.toLowerCase());
+      const column = keybinds.indexOf(key);
 
       if (column !== -1) {
         const now = musicTime.current ? musicTime.current.currentTime * 1000 : currentTimeRef.current;
         judgeHit(column, now);
       }
-  }, [judgeHit, songInfo, userData]);
+    }
+  }, [judgeHit, judgeTaiko, songInfo, userData, hitObjects]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     setPressedKeys(prev => {

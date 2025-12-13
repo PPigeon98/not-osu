@@ -7,6 +7,7 @@ export type HitObject = {
   y: number;
   time: number;
   type: number;
+  hitSound: number;
   endTime?: number;
 };
 
@@ -17,6 +18,7 @@ export type UserData = {
   ManiaWidth: Record<string, string>;
   ManiaHeight: Record<string, string>;
   ScrollSpeed: number;
+  TaikoScrollSpeed: number;
   ReceptorOffset: string;
   TaikoReceptorOffset: string;
   BackgroundBlur: number;

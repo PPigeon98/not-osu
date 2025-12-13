@@ -7,6 +7,7 @@ type HitObject = {
   y: number;
   time: number;
   type: number;
+  hitSound: number;
   endTime?: number;
 };
 
@@ -51,8 +52,9 @@ const MapLoader = () => {
 
         if (trimmed && !trimmed.startsWith('//')) {
           const parts = trimmed.split(',');
-          if (parts.length >= 4) {
+          if (parts.length >= 5) {
             const type = parseInt(parts[3]);
+            const hitSound = parseInt(parts[4]) || 0;
             let endTime: number | undefined;
 
             if (type === 7 && parts.length >= 6) {
@@ -68,6 +70,7 @@ const MapLoader = () => {
               y: parseInt(parts[1]),
               time: parseInt(parts[2]),
               type,
+              hitSound,
               endTime,
             });
           }

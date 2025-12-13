@@ -21,6 +21,7 @@ export type JudgingState = {
 
 export type JudgingControls = {
   judgeHit: (column: number, nowMs: number) => void;
+  judgeTaiko: (isKat: boolean, nowMs: number, hitObjects: HitObject[]) => void;
   markMiss: (diffMs: number) => void;
   resetJudging: (noteCount: number) => void;
 };
@@ -70,6 +71,15 @@ export const Judger = (
     return total;
   }, [maxCombo, maxBaseScorePerHit]);
 
+  const calculateJudgement = (absDiff: number, windowConfig: UserData['JudgementWindow'][string]): JudgementName => {
+    if (absDiff <= windowConfig.Marvelous) return 'Marvelous';
+    if (absDiff <= windowConfig.Perfect) return 'Perfect';
+    if (absDiff <= windowConfig.Great) return 'Great';
+    if (absDiff <= windowConfig.Good) return 'Good';
+    if (absDiff <= windowConfig.Okay) return 'Okay';
+    return 'Miss';
+  };
+
   const applyJudgementEffects = useCallback((result: JudgementName) => {
     if (result === 'Miss') {
       comboRef.current = 0;
@@ -105,6 +115,24 @@ export const Judger = (
 
     setScore(computedScore);
   }, [maxCombo, maxComboPortion, userData.Accuracy, userData.Life, maxBaseScorePerHit, scoreValues]);
+
+  const updateJudgementCounts = useCallback((result: JudgementName, diff: number) => {
+    setJudgementCounts(prev => {
+      const newCounts: Record<JudgementName, number> = {
+        Marvelous: prev.Marvelous,
+        Perfect: prev.Perfect,
+        Great: prev.Great,
+        Good: prev.Good,
+        Okay: prev.Okay,
+        Miss: prev.Miss,
+      };
+      newCounts[result] += 1;
+      judgementCountsRef.current = cloneJudgementCounts(newCounts);
+      return newCounts;
+    });
+    setLastJudgement({ type: result, diff });
+    applyJudgementEffects(result);
+  }, [applyJudgementEffects]);
 
   const judgeHit = useCallback((column: number, nowMs: number) => {
     const windowConfig = activeJudgementWindow;
@@ -144,32 +172,57 @@ export const Judger = (
       return;
     }
 
-    let result: JudgementName;
-    if (bestAbsDiff <= windowConfig.Marvelous) result = 'Marvelous';
-    else if (bestAbsDiff <= windowConfig.Perfect) result = 'Perfect';
-    else if (bestAbsDiff <= windowConfig.Great) result = 'Great';
-    else if (bestAbsDiff <= windowConfig.Good) result = 'Good';
-    else if (bestAbsDiff <= windowConfig.Okay) result = 'Okay';
-    else result = 'Miss';
-
+    const result = calculateJudgement(bestAbsDiff, windowConfig);
     judged[bestIndex] = true;
+    updateJudgementCounts(result, bestSignedDiff);
+  }, [activeJudgementWindow, judgedNotesRef, precomputedColumnsRef, sortedTimesRef, updateJudgementCounts]);
 
-    setJudgementCounts(prev => {
-      const newCounts: Record<JudgementName, number> = {
-        Marvelous: prev.Marvelous,
-        Perfect: prev.Perfect,
-        Great: prev.Great,
-        Good: prev.Good,
-        Okay: prev.Okay,
-        Miss: prev.Miss,
-      };
-      newCounts[result] += 1;
-      judgementCountsRef.current = cloneJudgementCounts(newCounts);
-      return newCounts;
-    });
-    setLastJudgement({ type: result, diff: bestSignedDiff });
-    applyJudgementEffects(result);
-  }, [activeJudgementWindow, applyJudgementEffects, judgedNotesRef, precomputedColumnsRef, sortedTimesRef]);
+  const judgeTaiko = useCallback((isKat: boolean, nowMs: number, hitObjects: HitObject[]) => {
+    const windowConfig = activeJudgementWindow;
+    if (!windowConfig) return;
+
+    const times = sortedTimesRef.current;
+    const judged = judgedNotesRef.current;
+    if (!times || !judged) return;
+
+    const maxWindow = windowConfig.Miss;
+    if (maxWindow <= 0) return;
+
+    let bestIndex = -1;
+    let bestAbsDiff = Number.POSITIVE_INFINITY;
+    let bestSignedDiff = 0;
+
+    for (let i = 0; i < times.length; i++) {
+      if (judged[i]) continue;
+
+      const hitObject = hitObjects[i];
+      const hitSound = hitObject.hitSound;
+      const noteIsKat = (hitSound & 2) !== 0 || (hitSound & 8) !== 0;
+
+      if (noteIsKat !== isKat) continue;
+
+      const diff = times[i] - nowMs;
+      const absDiff = Math.abs(diff);
+
+      if (absDiff > maxWindow && diff > 0) {
+        break;
+      }
+
+      if (absDiff < bestAbsDiff) {
+        bestAbsDiff = absDiff;
+        bestSignedDiff = diff;
+        bestIndex = i;
+      }
+    }
+
+    if (bestIndex === -1 || bestAbsDiff > maxWindow) {
+      return;
+    }
+
+    const result = calculateJudgement(bestAbsDiff, windowConfig);
+    judged[bestIndex] = true;
+    updateJudgementCounts(result, bestSignedDiff);
+  }, [activeJudgementWindow, judgedNotesRef, sortedTimesRef, updateJudgementCounts]);
 
   const markMiss = useCallback((diffMs: number) => {
     setJudgementCounts(prev => {
@@ -222,6 +275,7 @@ export const Judger = (
 
   const controls: JudgingControls = {
     judgeHit,
+    judgeTaiko,
     markMiss,
     resetJudging,
   };
