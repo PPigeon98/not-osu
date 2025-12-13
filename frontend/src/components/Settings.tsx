@@ -15,7 +15,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
   return (
     <Modal open={open} onClose={onClose}>
       <div className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF]">
-        <div className="flex flex-col bg-stone-800 bg-opacity-80 rounded-xl w-[500px] h-[600px] p-8 gap-4">
+        <div className="flex flex-col bg-stone-900 bg-opacity-80 rounded-xl w-[500px] h-[600px] p-8 gap-4">
           <div className="flex justify-center text-xl">Settings</div>
           <div className="flex flex-col gap-3">
             <div className="flex w-full items-center gap-4">

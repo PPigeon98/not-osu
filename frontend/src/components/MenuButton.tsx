@@ -16,7 +16,7 @@ export default function MenuButton({
   return (
     <button
       className={[
-        "bg-indigo-950 hover:bg-indigo-900 text-white font-bold py-4 w-[370px] px-8 rounded-xl text-2xl ring-2 ring-neutral-900 shadow-xl",
+        "bg-indigo-950 hover:bg-violet-950 text-white font-bold py-4 w-[370px] px-8 rounded-xl text-2xl ring-2 ring-neutral-900 shadow-xl",
         className,
       ].join(" ")}
       type="button"
