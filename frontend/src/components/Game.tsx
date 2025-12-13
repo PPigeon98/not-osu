@@ -23,6 +23,9 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const pressedKeysRef = useRef<Set<string>>(new Set());
   const [progress, setProgress] = useState<number>(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const hasStartedRef = useRef<boolean>(false);
+  const countdownIntervalRef = useRef<number | null>(null);
   const musicTime = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const currentTimeRef = useRef<number>(0);
@@ -47,6 +50,39 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
 
   const activeJudgementWindow = userData.JudgementWindow[userData.Judgment];
 
+  const normaliseKey = useCallback((event: KeyboardEvent): string => {
+    if (event.code.startsWith('Numpad')) {
+      return event.code;
+    } else {
+      const key = event.key.toLowerCase();
+      return key === ' ' ? 'space' : key;
+    }
+  }, []);
+
+  const startCountdown = useCallback(() => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setCountdown(3);
+    let count = 3;
+    countdownIntervalRef.current = window.setInterval(() => {
+      count--;
+      if (count > 0) {
+        setCountdown(count);
+      } else {
+        setCountdown(null);
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
+        if (musicTime.current) {
+          musicTime.current.play();
+        }
+      }
+    }, 1000);
+  }, []);
+
   useEffect(() => {
     if (life <= 0) {
       const audio = musicTime.current;
@@ -63,21 +99,21 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   }, [life, navigate]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    let key: string;
-    if (event.code.startsWith('Numpad')) {
-      key = event.code;
-    } else {
-      key = event.key.toLowerCase();
-      if (key === ' ') {
-        key = 'space';
-      }
-    }
+    const key = normaliseKey(event);
 
     if (key.toLowerCase() === 'escape') {
       const audio = musicTime.current;
       if (audio) {
-        if (audio.paused) audio.play();
-        else audio.pause();
+        if (audio.paused) {
+          startCountdown();
+        } else {
+          audio.pause();
+          setCountdown(null);
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+        }
       }
       return;
     }
@@ -110,25 +146,17 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
         judgeHit(column, now);
       }
     }
-  }, [judgeHit, judgeTaiko, songInfo, userData, hitObjects]);
+  }, [judgeHit, judgeTaiko, songInfo, userData, hitObjects, startCountdown, normaliseKey]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
-    let key: string;
-    if (event.code.startsWith('Numpad')) {
-      key = event.code;
-    } else {
-      key = event.key.toLowerCase();
-      if (key === ' ') {
-        key = 'space';
-      }
-    }
+    const key = normaliseKey(event);
     setPressedKeys(prev => {
       const newKeys = new Set(prev);
       newKeys.delete(key);
       pressedKeysRef.current = newKeys;
       return newKeys;
     });
-  }, []);
+  }, [normaliseKey]);
 
   useEffect(() => {
     if (musicTime.current) {
@@ -209,7 +237,12 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
       <audio
         ref={musicTime}
         src={mapPath + songInfo['AudioFilename']}
-        autoPlay
+        onLoadedData={() => {
+          if (!hasStartedRef.current && musicTime.current) {
+            hasStartedRef.current = true;
+            startCountdown();
+          }
+        }}
         onEnded={() => {
           navigate('/passedmap', {
             state: {
@@ -228,7 +261,12 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
           ref={canvasRef}
           className="bg-black"
         />
-        {lastJudgement && lastJudgement.type !== 'Miss' && (
+        {countdown !== null && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+            <div className="text-[12vw] font-bold">{countdown}</div>
+          </div>
+        )}
+        {lastJudgement && lastJudgement.type !== 'Miss' && countdown === null && (
           <div className="absolute top-[20%] left-1/2 transform -translate-x-1/2 text-center pointer-events-none">
             <div className="text-[4vw] font-bold mb-0">{lastJudgement.type}</div>
             <div className="text-[1.8vw]">{Math.round(lastJudgement.diff)}ms</div>
