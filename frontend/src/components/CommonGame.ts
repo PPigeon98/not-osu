@@ -61,7 +61,6 @@ export const calculateAccuracyPercent = (
   return weightedSum / total;
 };
 
-// Audio/Time utilities
 export type UseAudioTimeProps = {
   musicSpeed: number;
   musicVolume: number;
@@ -105,7 +104,6 @@ export const useAudioTime = ({ musicSpeed, musicVolume, audioSrc }: UseAudioTime
   };
 };
 
-// Time windowing utilities
 export const findVisibleObjectsRange = (
   times: number[],
   now: number,

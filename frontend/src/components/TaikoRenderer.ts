@@ -100,7 +100,11 @@ export const TaikoRenderer = ({
         else hi = mid;
       }
       const upperBoundTime = now + visibleWindowMsFuture;
-      for (let i = lo; i < timesArr.length && timesArr[i] <= upperBoundTime; i++) {
+      let endIndex = lo;
+      while (endIndex < timesArr.length && timesArr[endIndex] <= upperBoundTime) {
+        endIndex++;
+      }
+      for (let i = endIndex - 1; i >= lo; i--) {
         if (judgedArr[i]) continue;
 
         const time = timesArr[i];
@@ -121,10 +125,18 @@ export const TaikoRenderer = ({
         const hitSound = hitObject.hitSound;
         const isKat = (hitSound & 2) !== 0 || (hitSound & 8) !== 0;
 
+        const noteRadius = canvas.height * 0.35;
+        const strokeWidth = noteRadius * 0.1;
         ctx.fillStyle = isKat ? '#4A90E2' : '#FF6B6B';
         ctx.beginPath();
-        ctx.arc(x, centerY, 50, 0, Math.PI * 2);
+        ctx.arc(x, centerY, noteRadius, 0, Math.PI * 2);
         ctx.fill();
+        
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = strokeWidth;
+        ctx.beginPath();
+        ctx.arc(x, centerY, noteRadius - strokeWidth / 2, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       animationFrameId = requestAnimationFrame(animate);
