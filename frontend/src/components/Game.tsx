@@ -8,6 +8,7 @@ import {
 } from './CommonGame';
 import { Judger } from './Judger';
 import { ManiaRenderer } from './ManiaRenderer';
+import { TaikoRenderer } from './TaikoRenderer';
 
 type GameProps = {
   songInfo: SongInfo;
@@ -103,23 +104,40 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     musicTime.current.volume = musicVolume / 100;
   }, [musicVolume]);
 
-  ManiaRenderer({
-    songInfo,
-    userData,
-    hitObjects,
-    activeJudgementWindow,
-    musicTimeRef: musicTime,
-    canvasRef,
-    setCurrentTime,
-    currentTimeRef,
-    precomputedColumnsRef,
-    sortedTimesRef,
-    judgedNotesRef,
-    laneWidthPxRef,
-    noteHeightPxRef,
-    markMiss,
-    resetJudging,
-  });
+  if (songInfo['Mode'] === '1') {
+    TaikoRenderer({
+      songInfo,
+      userData,
+      hitObjects,
+      activeJudgementWindow,
+      musicTimeRef: musicTime,
+      canvasRef,
+      setCurrentTime,
+      currentTimeRef,
+      sortedTimesRef,
+      judgedNotesRef,
+      markMiss,
+      resetJudging,
+    });
+  } else {
+    ManiaRenderer({
+      songInfo,
+      userData,
+      hitObjects,
+      activeJudgementWindow,
+      musicTimeRef: musicTime,
+      canvasRef,
+      setCurrentTime,
+      currentTimeRef,
+      precomputedColumnsRef,
+      sortedTimesRef,
+      judgedNotesRef,
+      laneWidthPxRef,
+      noteHeightPxRef,
+      markMiss,
+      resetJudging,
+    });
+  }
 
   return (
     <>

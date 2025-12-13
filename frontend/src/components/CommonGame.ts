@@ -18,6 +18,7 @@ export type UserData = {
   ManiaHeight: Record<string, string>;
   ScrollSpeed: number;
   ReceptorOffset: string;
+  TaikoReceptorOffset: string;
   BackgroundBlur: number;
   BackgroundOpacity: number;
   Accuracy: Record<string, number>;

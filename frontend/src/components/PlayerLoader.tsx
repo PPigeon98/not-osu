@@ -67,6 +67,7 @@ const PlayerLoader = ({ songInfo, hitObjects, mapPath }: PlayerLoaderProps) => {
       },
       ScrollSpeed: 2.5,
       ReceptorOffset: '11.11',
+      TaikoReceptorOffset: '8',
       BackgroundBlur: 5,
       BackgroundOpacity: 0.6,
       JudgementWindow: {
