@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Keypresses from './Keypresses';
 
 type SongInfo = Record<string, string | number>;
 
@@ -25,6 +26,7 @@ type UserData = {
   Life: Record<string, number>;
   Judgment: string;
   MusicSpeed: number;
+  MusicVolume: number;
   ScoreValues: Record<JudgementName, number>;
   JudgementWindow: Record<
     string,
@@ -127,6 +129,8 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
   }, [maxCombo, maxBaseScorePerHit]);
   const rawAccuracy = calculateAccuracyPercent(judgementCounts, userData.Accuracy);
   const displayAccuracy = Math.min(100, Math.max(0, rawAccuracy));
+
+  const musicVolume = userData.MusicVolume;
 
   const applyJudgementEffects = useCallback((result: JudgementName) => {
     if (result === 'Miss') {
@@ -266,51 +270,48 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     applyJudgementEffects(result);
   }, [activeJudgementWindow, applyJudgementEffects]);
 
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    const key = event.key.toLowerCase();
+
+    if (key === 'escape') {
+      const audio = musicTime.current;
+      if (audio) {
+        if (audio.paused) audio.play();
+        else audio.pause();
+      }
+      return;
+    }
+
+    setPressedKeys(prev => new Set(prev).add(key));
+
+    const circleSize = songInfo['CircleSize'];
+    const maniaWidthKey = String(circleSize);
+    const keybinds = userData.Keybinds[maniaWidthKey].map(k => k.toLowerCase());
+    const column = keybinds.indexOf(key);
+
+    if (column !== -1) {
+      judgeHit(column);
+    }
+  }, [judgeHit, songInfo, userData]);
+
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    setPressedKeys(prev => {
+      const newKeys = new Set(prev);
+      newKeys.delete(event.key.toLowerCase());
+      return newKeys;
+    });
+  }, []);
+
   useEffect(() => {
     if (musicTime.current) {
       musicTime.current.playbackRate = userData.MusicSpeed;
     }
+  }, [userData.MusicSpeed]);
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase();
-
-       if (key === 'escape') {
-         const audio = musicTime.current;
-         if (audio) {
-           if (audio.paused) audio.play();
-           else audio.pause();
-         }
-         return;
-       }
-
-      setPressedKeys(prev => new Set(prev).add(key));
-
-      const circleSize = songInfo['CircleSize'];
-      const maniaWidthKey = String(circleSize);
-      const keybinds = userData.Keybinds[maniaWidthKey].map(k => k.toLowerCase());
-      const column = keybinds.indexOf(key);
-
-      if (column !== -1) {
-        judgeHit(column);
-      }
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      setPressedKeys(prev => {
-        const newKeys = new Set(prev);
-        newKeys.delete(event.key.toLowerCase());
-        return newKeys;
-      });
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [judgeHit, songInfo, userData]);
+  useEffect(() => {
+    if (!musicTime.current) return;
+    musicTime.current.volume = musicVolume / 100;
+  }, [musicVolume]);
 
   useEffect(() => {
     const resetCounts = createEmptyJudgementCounts();
@@ -561,6 +562,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
           className="bg-black"
         />
       </main>
+      <Keypresses onKeyDown={handleKeyDown} onKeyUp={handleKeyUp} />
     </>
   )
 }

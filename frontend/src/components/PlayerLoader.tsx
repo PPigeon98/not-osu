@@ -23,6 +23,7 @@ type UserData = {
   Life: Record<string, number>;
   Judgment: string;
   MusicSpeed: number;
+  MusicVolume: number;
   ScoreValues: Record<'Marvelous' | 'Perfect' | 'Great' | 'Good' | 'Okay' | 'Miss', number>;
   JudgementWindow: Record<
     string,
@@ -174,6 +175,7 @@ const PlayerLoader = ({ songInfo, hitObjects, mapPath }: PlayerLoaderProps) => {
       Life: { Marvelous: 2.5, Perfect: 2, Great: 1, Good: 0, Okay: -0.5, Miss: -2 },
       Judgment: 'Standard',
       MusicSpeed: 1,
+      MusicVolume: 100,
       ScoreValues: { Marvelous: 300, Perfect: 300, Great: 200, Good: 100, Okay: 50, Miss: 0 },
     });
   }, []);

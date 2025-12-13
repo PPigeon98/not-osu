@@ -5,6 +5,7 @@ import Settings from "./Settings";
 import useSound from "use-sound";
 import buttonHover1 from "../../public/sounds/button_hover_1.wav";
 import buttonClick1 from "../../public/sounds/button_click_1.wav";
+import MenuButton from "./MenuButton";
 
 const StartMenu = () => {
   const [openSettings, setOpenSettings] = useState(false);
@@ -15,28 +16,10 @@ const StartMenu = () => {
     <>
       <main className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF]">
         <span className="text-4xl">Not Osu!</span>
-        <Button
-          variant="contained"
-          onMouseEnter={() => {
-            playHoverSound();
-          }}
-          onMouseDown={() => {
-            playClickSound();
-          }}
-        >
+        <MenuButton>
           <Link to="/select">Start!</Link>
-        </Button>
-        <Button
-          onClick={handleOpenSettings}
-          onMouseEnter={() => {
-            playHoverSound();
-          }}
-          onMouseDown={() => {
-            playClickSound();
-          }}
-        >
-          Settings
-        </Button>
+        </MenuButton>
+        <MenuButton onClick={handleOpenSettings}>Settings</MenuButton>
         {/* all the settings are in playerloader.tsx but it could be split into more components */}
         <Settings
           open={openSettings}
