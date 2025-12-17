@@ -107,15 +107,106 @@ app.post('/api/beatmaps/upload', upload.single('beatmap'), async (req: Request, 
   }
 });
 
+const getMetadata = (fileString: string) => {
+  const lines = fileString.split('\n');
+
+  let audioFilename = '';
+  let previewTime = 0;
+  let mode = 0;
+  let title = '';
+  let artist = '';
+  let version = '';
+  let circleSize = 0;
+
+  let currentSection = '';
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      currentSection = trimmed.slice(1, -1);
+      continue;
+    }
+
+    if (!trimmed || trimmed.startsWith('//')) {
+      continue;
+    }
+
+    if (currentSection === 'General') {
+      const parts = trimmed.split(':');
+      if (parts.length >= 2) {
+        const key = parts[0].trim();
+        const value = parts.slice(1).join(':').trim();
+
+        if (key === 'AudioFilename') {
+          audioFilename = value;
+        } else if (key === 'PreviewTime') {
+          previewTime = parseInt(value, 10);
+        } else if (key === 'Mode') {
+          mode = parseInt(value, 10);
+        }
+      }
+    }
+
+    else if (currentSection === 'Metadata') {
+      const parts = trimmed.split(':');
+      if (parts.length >= 2) {
+        const key = parts[0].trim();
+        const value = parts.slice(1).join(':').trim();
+
+        if (key === 'Title') {
+          title = value;
+        } else if (key === 'Artist') {
+          artist = value;
+        } else if (key === 'Version') {
+          version = value;
+        }
+      }
+    }
+
+    else if (currentSection === 'Difficulty') {
+      const parts = trimmed.split(':');
+      if (parts.length >= 2) {
+        const key = parts[0].trim();
+        const value = parts.slice(1).join(':').trim();
+
+        if (key === 'CircleSize') {
+          circleSize = parseFloat(value);
+        }
+      }
+    }
+  }
+
+  return {
+    AudioFilename: audioFilename,
+    PreviewTime: previewTime,
+    Mode: mode,
+    Title: title,
+    Artist: artist,
+    Version: version,
+    CircleSize: circleSize,
+  };
+};
+
 app.get('/api/beatmaps', async (req: Request, res: Response) => {
   try {
     const files = await fg('**/*.osu', { cwd: BEATMAPS_DIR, absolute: true });
 
-    const beatmaps = files.map(filePath => {
-      const id = path.basename(path.dirname(filePath));
-      const name = path.basename(filePath, '.osu');
-      return { id, name };
-    });
+    const beatmaps = await Promise.all(
+      files.map(async (filePath) => {
+        const id = path.basename(path.dirname(filePath));
+        const name = path.basename(filePath, '.osu');
+
+        const content = await fs.promises.readFile(filePath, 'utf8');
+        const songInfo = getMetadata(content);
+
+        return {
+          id,
+          name,
+          songInfo,
+        };
+      })
+    );
 
     res.status(200).json(beatmaps);
   } catch (error) {

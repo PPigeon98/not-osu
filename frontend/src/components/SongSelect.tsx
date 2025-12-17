@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button, IconButton } from "@mui/material";
 import FirstPageRoundedIcon from '@mui/icons-material/FirstPageRounded';
+import { GiDrumKit, GiGrandPiano } from "react-icons/gi";
+import { VscWarning } from "react-icons/vsc";
 import text from "../../public/song_select_text.svg";
 import '../App.css'; 
 import UploadBeatmap from "./UploadBeatmap";
@@ -11,9 +13,20 @@ import buttonClick1 from "../../public/sounds/button_click_1.wav";
 
 const backendUrl = 'http://localhost:5000';
 
+type BeatmapSongInfo = {
+  AudioFilename: string;
+  PreviewTime: number;
+  Mode: number;
+  Title: string;
+  Artist: string;
+  Version: string;
+  CircleSize: number;
+};
+
 type Beatmap = {
   id: number;
   name: string;
+  songInfo: BeatmapSongInfo;
 };
 
 const SongSelect = () => {  
@@ -49,11 +62,26 @@ const SongSelect = () => {
               key={i}
               to="/game"
               state={{ beatmapId: beatmap.id, beatmapName: beatmap.name }}
-              className="cursor-pointer hover:underline hover:text-[#934AB3]"
+              className="cursor-pointer hover:underline hover:text-[#934AB3] flex items-center gap-3"
               onMouseEnter={() => playHoverSound()}
               onClick={() => playClickSound()}
             >
-              {beatmap.name}
+              <span className="text-[3vh] flex items-center justify-center">
+                {beatmap.songInfo.Mode === 1 && <GiDrumKit />}
+                {beatmap.songInfo.Mode === 3 && <GiGrandPiano />}
+                {beatmap.songInfo.Mode !== 1 && beatmap.songInfo.Mode !== 3 && <VscWarning />}
+              </span>
+              <span>
+                <span className="font-bold text-[2.4vh] block">
+                  {beatmap.songInfo.Title}
+                </span>
+                <span className="text-[1.8vh] block">
+                  {beatmap.songInfo.Artist}
+                </span>
+                <span className="font-bold text-[1.8vh] block">
+                  {beatmap.songInfo.Version}
+                </span>
+              </span>
             </Link>
           ))}
         </div>
