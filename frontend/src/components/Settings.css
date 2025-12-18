@@ -1,0 +1,20 @@
+.keyBox {
+  width: 45px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid oklch(86.9% 0.005 56.366); /* stone-300 */
+  font-weight: bold;
+  transition: all 0.15s;
+}
+
+.keyBox:hover {
+  border-color: oklch(60.6% 0.25 292.717); /* violet-500 */
+  color: oklch(60.6% 0.25 292.717)
+}
+
+.keyBox:focus {
+  border-color: oklch(94.5% 0.129 101.54);
+  color: oklch(94.5% 0.129 101.54); /* yellow-200 */
+}
