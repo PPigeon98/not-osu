@@ -6,7 +6,7 @@ import { VscWarning } from "react-icons/vsc";
 import text from "../../public/song_select_text.svg";
 import '../App.css'; 
 import UploadBeatmap from "./UploadBeatmap";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useSound from "use-sound";
 import buttonHover1 from "../../public/sounds/button_hover_1.wav";
 import buttonClick1 from "../../public/sounds/button_click_1.wav";
@@ -33,6 +33,8 @@ const SongSelect = () => {
   const [beatmaps, setBeatmaps] = useState<Beatmap[]>([]);
   const [playHoverSound] = useSound(buttonHover1);
   const [playClickSound] = useSound(buttonClick1);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioPathRef = useRef<string | null>(null);
 
   useEffect(() => {
     fetchBeatmaps();
@@ -52,6 +54,30 @@ const SongSelect = () => {
     }
   };
 
+  const handleMouseEnter = (beatmap: Beatmap) => {
+    playHoverSound();
+
+    const audioPath = `./beatmapsRaw/${beatmap.id}/${beatmap.songInfo.AudioFilename}`;
+    const audio = new Audio(audioPath);
+
+    if (audioPath === audioPathRef.current) {
+      return;
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    audioPathRef.current = audioPath;
+    audio.currentTime = beatmap.songInfo.PreviewTime / 1000;
+    audio.volume = 0.2; // make this a setting later
+
+    audio.play()
+
+    audioRef.current = audio;
+  };
+
   return (
     <>
       <main className="flex flex-col justify-center items-center w-screen h-screen text-[#FFFFFF]">
@@ -63,12 +89,17 @@ const SongSelect = () => {
               to="/game"
               state={{ beatmapId: beatmap.id, beatmapName: beatmap.name }}
               className="cursor-pointer hover:underline hover:text-[#934AB3] flex items-center gap-3"
-              onMouseEnter={() => playHoverSound()}
+              onMouseEnter={() => handleMouseEnter(beatmap)}
               onClick={() => playClickSound()}
             >
-              <span className="text-[3vh] flex items-center justify-center">
+              <span className="text-[3vh] flex items-center justify-center gap-1">
                 {beatmap.songInfo.Mode === 1 && <GiDrumKit />}
-                {beatmap.songInfo.Mode === 3 && <GiGrandPiano />}
+                {beatmap.songInfo.Mode === 3 && (
+                  <>
+                    <GiGrandPiano />
+                    <span className="text-[2vh]">{beatmap.songInfo.CircleSize}K</span>
+                  </>
+                )}
                 {beatmap.songInfo.Mode !== 1 && beatmap.songInfo.Mode !== 3 && <VscWarning />}
               </span>
               <span>
