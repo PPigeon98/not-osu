@@ -22,7 +22,7 @@ const Pause = ({ open, onClose, onQuit }: PauseProps) => {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1a1a2e'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#11111B'}
           >
-            Unpause
+            Continue
           </Button>
           <Button
             onClick={onQuit}

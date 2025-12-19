@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { IconButton, Box, Input, Select, MenuItem, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import FirstPageRoundedIcon from '@mui/icons-material/FirstPageRounded';
 import { GiDrumKit, GiGrandPiano } from "react-icons/gi";
@@ -41,6 +41,7 @@ const SongSelect = () => {
   const [mode, setMode] = useState<ModeType>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioPathRef = useRef<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchBeatmaps();
@@ -235,15 +236,14 @@ const SongSelect = () => {
           </div>
         </div>
 
-        {/* this button is temporary, u make it look nicer later */}
         <Box sx={{ display: 'flex', gap: 2 }}>
           <IconButton aria-label="back" 
-            href="/"
             sx={{
               backgroundColor: '#934AB3',
               marginTop: 1,
               color: 'white','&:hover': {backgroundColor: '#6A2C85'}
-            }}>
+            }}
+            onClick={() => navigate("/")}>
               <FirstPageRoundedIcon />
           </IconButton>
           <UploadBeatmap />

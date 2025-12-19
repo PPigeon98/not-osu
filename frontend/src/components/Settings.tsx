@@ -43,7 +43,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                 </IconButton>
               </div>
             </div>
-            <div className="flex flex-col gap-3 overflow-auto">
+            <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-3 p-3">
                 <VolumeSlider
                   label={"Music"}
