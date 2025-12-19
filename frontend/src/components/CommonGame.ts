@@ -13,6 +13,12 @@ export type HitObject = {
 
 export type JudgementName = 'Marvelous' | 'Perfect' | 'Great' | 'Good' | 'Okay' | 'Miss';
 
+export type LeaderboardScore = {
+  score: number;
+  highestCombo: number;
+  accuracy: number;
+};
+
 export type UserData = {
   Keybinds: Record<string, string[]>;
   ManiaWidth: Record<string, string>;
@@ -30,6 +36,7 @@ export type UserData = {
   MusicVolume: number;
   ScoreValues: Record<JudgementName, number>;
   JudgementWindow: Record<string, Record<JudgementName, number>>;
+  Scores: Record<string, LeaderboardScore[]>;
 };
 
 export const JUDGEMENT_NAMES: JudgementName[] = ['Marvelous', 'Perfect', 'Great', 'Good', 'Okay', 'Miss'];

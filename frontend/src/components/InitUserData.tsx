@@ -246,6 +246,7 @@ export const defaultUserData: UserData = {
     Okay: 50,
     Miss: 0,
   },
+  Scores: {},
 };
 
 export function InitUserData(): UserData {

@@ -263,11 +263,22 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
           }
         }}
         onEnded={() => {
+          const beatmapId = String(songInfo["BeatmapID"]);
+          userData.Scores[beatmapId] ??= [];
+
+          userData.Scores[beatmapId].push({
+            score,
+            highestCombo,
+            accuracy: displayAccuracy,
+          });
+          localStorage.setItem("userData", JSON.stringify(userData));
+
           navigate('/passedmap', {
             state: {
               score,
               accuracy: displayAccuracy,
               highestCombo: highestCombo,
+              scores: userData.Scores[beatmapId],
             },
           });
         }}
