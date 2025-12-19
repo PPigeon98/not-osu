@@ -1,7 +1,5 @@
 // import React from "react";
-import { Modal, Slider, Typography, IconButton, Slide } from "@mui/material";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
-// import VolumeMuteIcon from "@mui/icons-material/VolumeMute";
+import { Modal, Typography, IconButton, Slide } from "@mui/material";
 import { useState, useEffect } from "react";
 // import PlayerLoader from "./PlayerLoader";
 import "./Settings.css";
@@ -9,6 +7,7 @@ import { type UserData } from "./CommonGame";
 // import InitUserData from "./InitUserData";
 import KeybindSet from "./KeybindSet";
 import CloseIcon from "@mui/icons-material/Close";
+import VolumeSlider from "./VolumeSlider";
 
 type SettingsProps = {
   open: boolean;
@@ -46,33 +45,11 @@ const Settings = ({ open, onClose }: SettingsProps) => {
             </div>
             <div className="flex flex-col gap-3 overflow-auto">
               <div className="flex flex-col gap-3">
-                <div className="volumeContainer">
-                  <div className="volumeLabel">Master</div>
-                  <div>
-                    <VolumeUpIcon></VolumeUpIcon>
-                  </div>
-                  <div className="flex-1">
-                    <Slider color="secondary"></Slider>
-                  </div>
-                </div>
-                <div className="volumeContainer">
-                  <div className="volumeLabel">Music</div>
-                  <div>
-                    <VolumeUpIcon></VolumeUpIcon>
-                  </div>
-                  <div className="flex-1">
-                    <Slider color="secondary"></Slider>
-                  </div>
-                </div>
-                <div className="volumeContainer">
-                  <div className="volumeLabel">Sound</div>
-                  <div>
-                    <VolumeUpIcon></VolumeUpIcon>
-                  </div>
-                  <div className="flex-1">
-                    <Slider color="secondary"></Slider>
-                  </div>
-                </div>
+                <VolumeSlider
+                  label={"Music"}
+                  userData={userData}
+                  setUserData={setUserData}
+                />
               </div>
               <div>
                 <Typography>Keyboard</Typography>
