@@ -119,7 +119,7 @@ const SongSelect = () => {
         <img 
           src={text} 
           alt="Text saying 'Select your song!' on the right hand side" 
-          className="fixed right-20 w-1/2 translate-y-[-50px]"
+          className="fixed right-20 w-1/2 translate-y-[-50px] pointer-events-none"
         />
 
         {/* this button is temporary, u make it look nicer later */}

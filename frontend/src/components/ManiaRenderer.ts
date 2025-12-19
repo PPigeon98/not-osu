@@ -131,8 +131,8 @@ export const ManiaRenderer = ({
         const laneWidth = laneWidthPxRef.current;
         const width = laneWidth * 0.9;
         const x = laneX + (laneWidth - width) / 2;
-        const gradientStartY = canvas.height * 0.5;
-        const gradientEndY = canvas.height;
+        const gradientStartY = receptorY - noteHeightPxRef.current * 8;
+        const gradientEndY = receptorY;
         
         const gradient = ctx.createLinearGradient(x, gradientStartY, x, gradientEndY);
         gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
