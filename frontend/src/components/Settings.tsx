@@ -1,5 +1,5 @@
 // import React from "react";
-import { Modal, Typography, IconButton, Slide } from "@mui/material";
+import { Modal, IconButton, Slide } from "@mui/material";
 import { useState, useEffect } from "react";
 // import PlayerLoader from "./PlayerLoader";
 import "./Settings.css";
@@ -35,8 +35,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
       <Slide in={open} direction="up" timeout={300}>
         <div className="settingsPage">
           <div className="flex flex-col bg-stone-900 bg-opacity-90 rounded-xl w-[600px] h-[800px] p-8 gap-4">
-            <div className="flex items-center text-xl">
-              <div>Setting</div>
+            <div className="flex items-center text-2xl">
+              <div>Settings</div>
               <div className="ml-auto">
                 <IconButton sx={{ color: "white" }} onClick={onClose}>
                   <CloseIcon></CloseIcon>
@@ -44,19 +44,31 @@ const Settings = ({ open, onClose }: SettingsProps) => {
               </div>
             </div>
             <div className="flex flex-col gap-3 overflow-auto">
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 p-3">
                 <VolumeSlider
                   label={"Music"}
                   userData={userData}
                   setUserData={setUserData}
                 />
               </div>
-              <div>
-                <Typography>Keyboard</Typography>
+              <div className="flex flex-col gap-1">
+                <div className="text-xl">Keyboard</div>
+                <div className="p-3">
+                  taiko
+                  <div className="keyBindContainer">
+                    {userData.Keybinds.taiko.map((_, idx) => (
+                      <KeybindSet
+                        keysIndex={idx}
+                        userData={userData}
+                        setUserData={setUserData}
+                      />
+                    ))}
+                  </div>
+                </div>
                 <div>
-                  <div>
+                  <div className="p-3">
                     4k
-                    <div className="flex justify-center place-items-center">
+                    <div className="keyBindContainer">
                       {userData.Keybinds["4"].map((_, idx) => (
                         <KeybindSet
                           keysNum={4}
@@ -67,9 +79,9 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
-                  <div>
+                  <div className="p-3">
                     7k
-                    <div className="flex justify-center place-items-center">
+                    <div className="keyBindContainer">
                       {userData.Keybinds["7"].map((_, idx) => (
                         <KeybindSet
                           keysNum={7}
@@ -80,9 +92,9 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
-                  <div>
+                  <div className="p-3">
                     10k
-                    <div className="flex justify-center place-items-center">
+                    <div className="keyBindContainer">
                       {userData.Keybinds["10"].map((_, idx) => (
                         <KeybindSet
                           keysNum={10}
@@ -93,23 +105,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
-                  <div>
-                    20k
-                    <div className="flex justify-center place-items-center">
-                      {userData.Keybinds["20"].map((_, idx) => (
-                        <KeybindSet
-                          keysNum={20}
-                          keysIndex={idx}
-                          userData={userData}
-                          setUserData={setUserData}
-                        />
-                      ))}
-                    </div>
-                  </div>
                 </div>
-              </div>
-              <div>
-                <Typography>Gameplay</Typography>
               </div>
             </div>
           </div>

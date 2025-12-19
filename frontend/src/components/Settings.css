@@ -53,6 +53,12 @@
   gap: 1rem;
 }
 
+.keyBindContainer {
+  display: flex; 
+  justify-content: center;
+  place-items: center;
+}
+
 /*
 Source - https://stackoverflow.com/a
 Posted by Sagar Roy

@@ -150,7 +150,7 @@ export const defaultUserData: UserData = {
   ScrollSpeed: 2.5,
   TaikoScrollSpeed: 1.2,
   ReceptorOffset: "11.11",
-  TaikoReceptorOffset: "8",
+  TaikoReceptorOffset: "25",
   BackgroundBlur: 5,
   BackgroundOpacity: 0.6,
   JudgementWindow: {

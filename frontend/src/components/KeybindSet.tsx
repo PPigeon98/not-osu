@@ -4,8 +4,8 @@ import "./Settings.css";
 import { type UserData } from "./CommonGame";
 
 type KeybindSetProps = {
-  keysNum: number;
-  keysIndex: number;
+  keysNum?: number;
+  keysIndex?: number;
   userData: UserData | null;
   setUserData: React.Dispatch<React.SetStateAction<UserData | null>>;
 };
@@ -32,7 +32,15 @@ const KeybindSet = ({
   userData,
   setUserData,
 }: KeybindSetProps) => {
-  let key = userData?.Keybinds[String(keysNum)]?.[keysIndex] ?? null;
+  const taiko = keysNum === undefined || keysIndex === undefined;
+
+  let key: string | null = null;
+
+  if (taiko) {
+    key = userData?.Keybinds.taiko?.[keysIndex ?? 0] ?? null;
+  } else {
+    key = userData?.Keybinds[String(keysNum)]?.[keysIndex] ?? null;
+  }
 
   if (key) {
     key = formatKey(key);
@@ -44,6 +52,20 @@ const KeybindSet = ({
 
     setUserData((prev) => {
       if (!prev) return prev;
+
+      if (taiko) {
+        const updatedTaiko = [...prev.Keybinds.taiko];
+
+        updatedTaiko[keysIndex ?? 0] = newKey;
+
+        return {
+          ...prev,
+          Keybinds: {
+            ...prev.Keybinds,
+            taiko: updatedTaiko,
+          },
+        };
+      }
 
       const keyNum = String(keysNum);
       const updatedKeybinds = [...prev.Keybinds[keyNum]];

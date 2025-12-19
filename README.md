@@ -33,7 +33,7 @@ To run this project locally, follow these steps:
 1. **Clone the Repository**
    ```bash
    git clone git@github.com:devsoc-unsw/trainee-kung-fu-panda-25t3.git
-   cd groveify
+   cd trainee-kung-fu-panda-25t3
    ```
 2. **Run the Frontend**
    ```bash

@@ -131,8 +131,8 @@ export const ManiaRenderer = ({
         const laneWidth = laneWidthPxRef.current;
         const width = laneWidth * 0.9;
         const x = laneX + (laneWidth - width) / 2;
-        const gradientStartY = canvas.height * 0.5;
-        const gradientEndY = canvas.height;
+        const gradientStartY = receptorY - noteHeightPxRef.current * 8;
+        const gradientEndY = receptorY;
         
         const gradient = ctx.createLinearGradient(x, gradientStartY, x, gradientEndY);
         gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
@@ -142,7 +142,7 @@ export const ManiaRenderer = ({
         ctx.fillRect(x, gradientStartY, width, gradientEndY - gradientStartY);
       }
       
-      ctx.fillStyle = '#11111B';
+      ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, receptorY, canvas.width, 2);
 
       ctx.fillStyle = '#FFFFFF';

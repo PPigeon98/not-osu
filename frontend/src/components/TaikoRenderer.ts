@@ -78,19 +78,18 @@ export const TaikoRenderer = ({
       const taikoReceptorOffsetPercent = parseFloat(userData.TaikoReceptorOffset);
       const taikoReceptorOffsetPx = (taikoReceptorOffsetPercent / 100) * canvas.width;
       const receptorX = taikoReceptorOffsetPx;
+      const centerY = canvas.height / 2;
 
-      ctx.strokeStyle = '#11111B';
+      const receptorRadius = canvas.height * 0.35;
+      ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(receptorX, 0);
-      ctx.lineTo(receptorX, canvas.height);
+      ctx.arc(receptorX, centerY, receptorRadius, 0, Math.PI * 2);
       ctx.stroke();
 
       const timesArr = sortedTimesRef.current || [];
       const judgedArr = judgedNotesRef.current || [];
       const missWindow = activeJudgementWindow.Miss;
-
-      const centerY = canvas.height / 2;
 
       let lo = 0, hi = timesArr.length;
       const lowerBoundTime = now - visibleWindowMsPast;
