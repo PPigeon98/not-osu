@@ -34,16 +34,11 @@ const defaultBackgroundOpacity = 0.6;
 
 const Settings = ({ open, onClose }: SettingsProps) => {
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [judgementWindowIndex, setJudgementWindowIndex] = useState<number>(3);
-  const [scrollSpeed, setScrollSpeed] = useState<number>(defaultScrollSpeed);
-  const [taikoScrollSpeed, setTaikoScrollSpeed] = useState<number>(defaultTaikoScrollSpeed);
-  const [receptorOffset, setReceptorOffset] = useState<number>(defaultReceptorOffset);
-  const [taikoReceptorOffset, setTaikoReceptorOffset] = useState<number>(defaultTaikoReceptorOffset);
-  const [backgroundBlur, setBackgroundBlur] = useState<number>(defaultBackgroundBlur);
-  const [backgroundOpacity, setBackgroundOpacity] = useState<number>(defaultBackgroundOpacity);
 
   const changeScrollSpeed = (offset: number) => {
-    let newOffset = scrollSpeed + offset;
+    if (!userData) return;
+
+    let newOffset = userData.ScrollSpeed + offset;
     if (newOffset < 0.1) {
       newOffset = 0.1;
     }
@@ -55,47 +50,65 @@ const Settings = ({ open, onClose }: SettingsProps) => {
   };
 
   const changeTaikoScrollSpeed = (offset: number) => {
-    let newOffset = taikoScrollSpeed + offset;
+    if (!userData) return;
+
+    let newOffset = userData.TaikoScrollSpeed + offset;
     if (newOffset < 0.1) {
       newOffset = 0.1;
     }
     newOffset = Math.round(newOffset * 100) / 100;
 
-    setTaikoScrollSpeed(newOffset);
+    setUserData((prev) =>
+      prev ? { ...prev, TaikoScrollSpeed: newOffset } : prev
+    );
   };
 
   const changeReceptorOffset = (offset: number) => {
-    let newOffset = receptorOffset + offset;
+    if (!userData) return;
+
+    let newOffset = parseFloat(userData.ReceptorOffset) + offset;
     if (newOffset < 0) {
       newOffset = 0;
     }
     newOffset = Math.round(newOffset * 100) / 100;
 
-    setReceptorOffset(newOffset);
+    setUserData((prev) =>
+      prev ? { ...prev, ReceptorOffset: newOffset } : prev
+    );
   };
 
   const changeTaikoReceptorOffset = (offset: number) => {
-    let newOffset = taikoReceptorOffset + offset;
+    if (!userData) return;
+
+    let newOffset = parseFloat(userData.TaikoReceptorOffset) + offset;
     if (newOffset < 0) {
       newOffset = 0;
     }
     newOffset = Math.round(newOffset * 100) / 100;
 
-    setTaikoReceptorOffset(newOffset);
+    setUserData((prev) =>
+      prev ? { ...prev, TaikoReceptorOffset: newOffset } : prev
+    );
   };
 
   const changeBackgroundBlur = (offset: number) => {
-    let newOffset = backgroundBlur + offset;
+    if (!userData) return;
+
+    let newOffset = userData.BackgroundBlur + offset;
     if (newOffset < 0) {
       newOffset = 0;
     }
     newOffset = Math.round(newOffset * 100) / 100;
 
-    setBackgroundBlur(newOffset);
+    setUserData((prev) =>
+      prev ? { ...prev, BackgroundBlur: newOffset } : prev
+    );
   };
 
   const changeBackgroundOpacity = (offset: number) => {
-    let newOffset = backgroundOpacity + offset;
+    if (!userData) return;
+    
+    let newOffset = userData.BackgroundOpacity + offset;
     if (newOffset < 0) {
       newOffset = 0;
     } else if (newOffset > 1) {
@@ -103,11 +116,15 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     }
     newOffset = Math.round(newOffset * 100) / 100;
 
-    setBackgroundOpacity(newOffset);
+    setUserData((prev) =>
+      prev ? { ...prev, BackgroundOpacity: newOffset } : prev
+    );
   };
 
   const changeJudgementIndex = (offset: number) => {
-    let newOffset = judgementWindowIndex + offset;
+    if (!userData) return;
+
+    let newOffset = JudgementWindows.indexOf(userData.Judgment) + offset;
     if (newOffset < 0) {
       newOffset = 7;
     } else if (newOffset > 7) {
@@ -115,7 +132,9 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     }
 
     const newJudgement = JudgementWindows[newOffset];
-    setUserData((prev) => (prev ? { ...prev, Judgment: newJudgement } : prev));
+    setUserData((prev) => 
+      prev ? { ...prev, Judgment: newJudgement } : prev
+    );
   };
 
   useEffect(() => {
@@ -131,85 +150,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     }
   }, [userData]);
 
-  useEffect(() => {
-    if (!userData) return;
-
-    const index = JudgementWindows.indexOf(userData.Judgment);
-    setJudgementWindowIndex(index !== -1 ? index : 3);
-    setScrollSpeed(userData.ScrollSpeed);
-  }, [userData]);
-
-  useEffect(() => {
-    if (userData?.TaikoScrollSpeed === undefined) return;
-
-    const speed = userData.TaikoScrollSpeed;
-
-    setTaikoScrollSpeed(speed);
-  }, [userData?.TaikoScrollSpeed]);
-
-  useEffect(() => {
-    setUserData((prev) =>
-      prev ? { ...prev, TaikoScrollSpeed: taikoScrollSpeed } : prev
-    );
-  }, [taikoScrollSpeed]);
-
-  useEffect(() => {
-    if (userData?.ReceptorOffset === undefined) return;
-
-    const offset = parseFloat(userData.ReceptorOffset);
-
-    setReceptorOffset(isNaN(offset) ? defaultReceptorOffset : offset);
-  }, [userData?.ReceptorOffset]);
-
-  useEffect(() => {
-    setUserData((prev) =>
-      prev ? { ...prev, ReceptorOffset: receptorOffset.toString() } : prev
-    );
-  }, [receptorOffset]);
-
-  useEffect(() => {
-    if (userData?.TaikoReceptorOffset === undefined) return;
-
-    const offset = parseFloat(userData.TaikoReceptorOffset);
-
-    setTaikoReceptorOffset(isNaN(offset) ? defaultTaikoReceptorOffset : offset);
-  }, [userData?.TaikoReceptorOffset]);
-
-  useEffect(() => {
-    setUserData((prev) =>
-      prev ? { ...prev, TaikoReceptorOffset: taikoReceptorOffset.toString() } : prev
-    );
-  }, [taikoReceptorOffset]);
-
-  useEffect(() => {
-    if (userData?.BackgroundBlur === undefined) return;
-
-    const blur = userData.BackgroundBlur;
-
-    setBackgroundBlur(blur);
-  }, [userData?.BackgroundBlur]);
-
-  useEffect(() => {
-    setUserData((prev) =>
-      prev ? { ...prev, BackgroundBlur: backgroundBlur } : prev
-    );
-  }, [backgroundBlur]);
-
-  useEffect(() => {
-    if (userData?.BackgroundOpacity === undefined) return;
-
-    const opacity = userData.BackgroundOpacity;
-
-    setBackgroundOpacity(opacity);
-  }, [userData?.BackgroundOpacity]);
-
-  useEffect(() => {
-    setUserData((prev) =>
-      prev ? { ...prev, BackgroundOpacity: backgroundOpacity } : prev
-    );
-  }, [backgroundOpacity]);
-
   if (!userData) return null;
+
   return (
     <Modal open={open} onClose={onClose} closeAfterTransition>
       <Slide in={open} direction="up" timeout={300}>
@@ -461,7 +403,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     >
                       &lt;
                     </div>
-                    {JudgementWindows[judgementWindowIndex]}
+                    {userData.Judgment}
                     <div
                       onClick={() => changeJudgementIndex(1)}
                       className="judgementAdjust"
@@ -492,7 +434,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       {" "}
                       -0.1
                     </div>
-                    <div>{scrollSpeed}</div>
+                    <div>{userData.ScrollSpeed}</div>
                     <div
                       onClick={() => changeScrollSpeed(0.1)}
                       className="scrollSpeedAdjust"
@@ -538,7 +480,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       {" "}
                       -0.1
                     </div>
-                    <div>{taikoScrollSpeed}</div>
+                    <div>{userData.TaikoScrollSpeed}</div>
                     <div
                       onClick={() => changeTaikoScrollSpeed(0.1)}
                       className="scrollSpeedAdjust"
@@ -584,7 +526,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       {" "}
                       -0.1
                     </div>
-                    <div>{receptorOffset}</div>
+                    <div>{userData.ReceptorOffset}</div>
                     <div
                       onClick={() => changeReceptorOffset(0.1)}
                       className="scrollSpeedAdjust"
@@ -630,7 +572,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       {" "}
                       -0.1
                     </div>
-                    <div>{taikoReceptorOffset}</div>
+                    <div>{userData.TaikoReceptorOffset}</div>
                     <div
                       onClick={() => changeTaikoReceptorOffset(0.1)}
                       className="scrollSpeedAdjust"
@@ -676,7 +618,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       {" "}
                       -0.1
                     </div>
-                    <div>{backgroundBlur}</div>
+                    <div>{userData.BackgroundBlur}</div>
                     <div
                       onClick={() => changeBackgroundBlur(0.1)}
                       className="scrollSpeedAdjust"
@@ -722,7 +664,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       {" "}
                       -0.01
                     </div>
-                    <div>{backgroundOpacity}</div>
+                    <div>{userData.BackgroundOpacity}</div>
                     <div
                       onClick={() => changeBackgroundOpacity(0.01)}
                       className="scrollSpeedAdjust"
