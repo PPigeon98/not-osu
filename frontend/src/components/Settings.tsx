@@ -26,11 +26,13 @@ const JudgementWindows = [
 ];
 
 const defaultScrollSpeed = 2.5;
+const defaultTaikoScrollSpeed = 1.2;
 
 const Settings = ({ open, onClose }: SettingsProps) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [judgementWindowIndex, setJudgementWindowIndex] = useState<number>(3);
   const [scrollSpeed, setScrollSpeed] = useState<number>(defaultScrollSpeed);
+  const [taikoScrollSpeed, setTaikoScrollSpeed] = useState<number>(defaultTaikoScrollSpeed);
 
   const changeScrollSpeed = (offset: number) => {
     let newOffset = scrollSpeed + offset;
@@ -40,6 +42,16 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     newOffset = Math.round(newOffset * 100) / 100;
 
     setScrollSpeed(newOffset);
+  };
+
+  const changeTaikoScrollSpeed = (offset: number) => {
+    let newOffset = taikoScrollSpeed + offset;
+    if (newOffset < 0.1) {
+      newOffset = 0.1;
+    }
+    newOffset = Math.round(newOffset * 100) / 100;
+
+    setTaikoScrollSpeed(newOffset);
   };
 
   const changeJudgementIndex = (offset: number) => {
@@ -95,6 +107,20 @@ const Settings = ({ open, onClose }: SettingsProps) => {
       prev ? { ...prev, ScrollSpeed: scrollSpeed } : prev
     );
   }, [scrollSpeed]);
+
+  useEffect(() => {
+    if (userData?.TaikoScrollSpeed === undefined) return;
+
+    const speed = userData.TaikoScrollSpeed;
+
+    setTaikoScrollSpeed(speed);
+  }, [userData?.TaikoScrollSpeed]);
+
+  useEffect(() => {
+    setUserData((prev) =>
+      prev ? { ...prev, TaikoScrollSpeed: taikoScrollSpeed } : prev
+    );
+  }, [taikoScrollSpeed]);
 
   if (!userData) return null;
   return (
@@ -245,6 +271,52 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     </div>
                     <div
                       onClick={() => changeScrollSpeed(1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +1
+                    </div>
+                  </div>
+                  <div className="p-3">Taiko Scroll Speed</div>
+                  <div className="flex gap-2 justify-center place-items-center">
+                    <div
+                      onClick={() => changeTaikoScrollSpeed(-1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -1
+                    </div>
+                    <div
+                      onClick={() => changeTaikoScrollSpeed(-0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.5
+                    </div>
+                    <div
+                      onClick={() => changeTaikoScrollSpeed(-0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.1
+                    </div>
+                    <div>{taikoScrollSpeed}</div>
+                    <div
+                      onClick={() => changeTaikoScrollSpeed(0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.1
+                    </div>
+                    <div
+                      onClick={() => changeTaikoScrollSpeed(0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.5
+                    </div>
+                    <div
+                      onClick={() => changeTaikoScrollSpeed(1)}
                       className="scrollSpeedAdjust"
                     >
                       {" "}
