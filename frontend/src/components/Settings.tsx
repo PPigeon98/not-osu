@@ -27,12 +27,16 @@ const JudgementWindows = [
 
 const defaultScrollSpeed = 2.5;
 const defaultTaikoScrollSpeed = 1.2;
+const defaultReceptorOffset = 11.11;
+const defaultTaikoReceptorOffset = 25;
 
 const Settings = ({ open, onClose }: SettingsProps) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [judgementWindowIndex, setJudgementWindowIndex] = useState<number>(3);
   const [scrollSpeed, setScrollSpeed] = useState<number>(defaultScrollSpeed);
   const [taikoScrollSpeed, setTaikoScrollSpeed] = useState<number>(defaultTaikoScrollSpeed);
+  const [receptorOffset, setReceptorOffset] = useState<number>(defaultReceptorOffset);
+  const [taikoReceptorOffset, setTaikoReceptorOffset] = useState<number>(defaultTaikoReceptorOffset);
 
   const changeScrollSpeed = (offset: number) => {
     let newOffset = scrollSpeed + offset;
@@ -52,6 +56,26 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     newOffset = Math.round(newOffset * 100) / 100;
 
     setTaikoScrollSpeed(newOffset);
+  };
+
+  const changeReceptorOffset = (offset: number) => {
+    let newOffset = receptorOffset + offset;
+    if (newOffset < 0) {
+      newOffset = 0;
+    }
+    newOffset = Math.round(newOffset * 100) / 100;
+
+    setReceptorOffset(newOffset);
+  };
+
+  const changeTaikoReceptorOffset = (offset: number) => {
+    let newOffset = taikoReceptorOffset + offset;
+    if (newOffset < 0) {
+      newOffset = 0;
+    }
+    newOffset = Math.round(newOffset * 100) / 100;
+
+    setTaikoReceptorOffset(newOffset);
   };
 
   const changeJudgementIndex = (offset: number) => {
@@ -121,6 +145,34 @@ const Settings = ({ open, onClose }: SettingsProps) => {
       prev ? { ...prev, TaikoScrollSpeed: taikoScrollSpeed } : prev
     );
   }, [taikoScrollSpeed]);
+
+  useEffect(() => {
+    if (userData?.ReceptorOffset === undefined) return;
+
+    const offset = parseFloat(userData.ReceptorOffset);
+
+    setReceptorOffset(isNaN(offset) ? defaultReceptorOffset : offset);
+  }, [userData?.ReceptorOffset]);
+
+  useEffect(() => {
+    setUserData((prev) =>
+      prev ? { ...prev, ReceptorOffset: receptorOffset.toString() } : prev
+    );
+  }, [receptorOffset]);
+
+  useEffect(() => {
+    if (userData?.TaikoReceptorOffset === undefined) return;
+
+    const offset = parseFloat(userData.TaikoReceptorOffset);
+
+    setTaikoReceptorOffset(isNaN(offset) ? defaultTaikoReceptorOffset : offset);
+  }, [userData?.TaikoReceptorOffset]);
+
+  useEffect(() => {
+    setUserData((prev) =>
+      prev ? { ...prev, TaikoReceptorOffset: taikoReceptorOffset.toString() } : prev
+    );
+  }, [taikoReceptorOffset]);
 
   if (!userData) return null;
   return (
@@ -317,6 +369,98 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     </div>
                     <div
                       onClick={() => changeTaikoScrollSpeed(1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +1
+                    </div>
+                  </div>
+                  <div className="p-3">Receptor Offset</div>
+                  <div className="flex gap-2 justify-center place-items-center">
+                    <div
+                      onClick={() => changeReceptorOffset(-1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -1
+                    </div>
+                    <div
+                      onClick={() => changeReceptorOffset(-0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.5
+                    </div>
+                    <div
+                      onClick={() => changeReceptorOffset(-0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.1
+                    </div>
+                    <div>{receptorOffset}</div>
+                    <div
+                      onClick={() => changeReceptorOffset(0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.1
+                    </div>
+                    <div
+                      onClick={() => changeReceptorOffset(0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.5
+                    </div>
+                    <div
+                      onClick={() => changeReceptorOffset(1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +1
+                    </div>
+                  </div>
+                  <div className="p-3">Taiko Receptor Offset</div>
+                  <div className="flex gap-2 justify-center place-items-center">
+                    <div
+                      onClick={() => changeTaikoReceptorOffset(-1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -1
+                    </div>
+                    <div
+                      onClick={() => changeTaikoReceptorOffset(-0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.5
+                    </div>
+                    <div
+                      onClick={() => changeTaikoReceptorOffset(-0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.1
+                    </div>
+                    <div>{taikoReceptorOffset}</div>
+                    <div
+                      onClick={() => changeTaikoReceptorOffset(0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.1
+                    </div>
+                    <div
+                      onClick={() => changeTaikoReceptorOffset(0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.5
+                    </div>
+                    <div
+                      onClick={() => changeTaikoReceptorOffset(1)}
                       className="scrollSpeedAdjust"
                     >
                       {" "}
