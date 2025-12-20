@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Settings from "./Settings";
 import MenuButton from "./MenuButton";
+import FunkyBackground from "./FunkyBackground";
 import logo from "../../public/not_osu_logo.svg";
 import wiiMusic from "../../public/sounds/Wi Fi Menu Medley Looped - Mario Kart Wii Music Extended (128kbit_AAC).m4a";
 import InitUserData from "./InitUserData";
@@ -28,10 +29,11 @@ const StartMenu = () => {
 
   return (
     <>
-      <main className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF]">
-        <img
-          src={logo}
-          alt="Not~Osu! start screen logo"
+      <FunkyBackground />
+      <main className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF] relative z-10">
+        <img 
+          src={logo} 
+          alt="Not~Osu! start screen logo" 
           style={{ height: "auto", width: "30%" }}
         />
         <MenuButton onClick={() => navigate("/select")}>Start!</MenuButton>
