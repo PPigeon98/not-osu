@@ -39,7 +39,9 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     }
     newOffset = Math.round(newOffset * 100) / 100;
 
-    setScrollSpeed(newOffset);
+    setUserData((prev) =>
+      prev ? { ...prev, ScrollSpeed: newOffset } : prev
+    );
   };
 
   const changeJudgementIndex = (offset: number) => {
@@ -50,7 +52,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
       newOffset = 0;
     }
 
-    setJudgementWindowIndex(newOffset);
+    const newJudgement = JudgementWindows[newOffset];
+    setUserData((prev) => (prev ? { ...prev, Judgment: newJudgement } : prev));
   };
 
   useEffect(() => {
@@ -67,41 +70,19 @@ const Settings = ({ open, onClose }: SettingsProps) => {
   }, [userData]);
 
   useEffect(() => {
-    if (!userData?.Judgment) return;
-
-    const index = JudgementWindows.indexOf(userData.Judgment);
-
-    setJudgementWindowIndex(index !== -1 ? index : 3);
-  }, [userData?.Judgment]);
-
-  useEffect(() => {
     if (!userData) return;
 
-    const newJudgement = JudgementWindows[judgementWindowIndex];
-
-    setUserData((prev) => (prev ? { ...prev, Judgment: newJudgement } : prev));
-  }, [judgementWindowIndex]);
-
-  useEffect(() => {
-    if (userData?.ScrollSpeed === undefined) return;
-
-    const speed = userData.ScrollSpeed;
-
-    setScrollSpeed(speed);
-  }, [userData?.ScrollSpeed]);
-
-  useEffect(() => {
-    setUserData((prev) =>
-      prev ? { ...prev, ScrollSpeed: scrollSpeed } : prev
-    );
-  }, [scrollSpeed]);
+    const index = JudgementWindows.indexOf(userData.Judgment);
+    setJudgementWindowIndex(index !== -1 ? index : 3);
+    setScrollSpeed(userData.ScrollSpeed);
+  }, [userData]);
 
   if (!userData) return null;
   return (
     <Modal open={open} onClose={onClose} closeAfterTransition>
       <Slide in={open} direction="up" timeout={300}>
         <div className="settingsPage">
-          <div className="flex flex-col bg-stone-900 bg-opacity-90 rounded-xl w-[600px] h-[800px] p-8 gap-4 overflow-auto">
+          <div className="flex flex-col bg-stone-900 bg-opacity-90 rounded-xl w-[750px] h-[700px] py-8 px-5 gap-4">
             <div className="flex items-center text-3xl">
               <div>Settings</div>
               <div className="ml-auto">
@@ -110,19 +91,24 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                 </IconButton>
               </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-3 p-3">
-                <VolumeSlider
-                  label={"Music"}
-                  userData={userData}
-                  setUserData={setUserData}
-                />
+            
+            <div className="flex flex-col gap-3 overflow-y-auto overflow-x-hidden px-5">
+               <div className="flex flex-col gap-1 mt-3">
+                <div className="text-xl font-bold">Volume</div>
+                <div className="p-3">
+                  <VolumeSlider
+                    label={"Music"}
+                    userData={userData}
+                    setUserData={setUserData}
+                  />
+                </div>
               </div>
+
               <div className="flex flex-col gap-1">
-                <div className="text-xl">Keyboard</div>
+                <div className="text-xl font-bold">Keyboard</div>
                 <div>
-                  <div className="p-3">
-                    taiko
+                  <div>
+                    <div className="p-3">Taiko</div>
                     <div className="keyBindContainer">
                       {userData.Keybinds.taiko.map((_, idx) => (
                         <KeybindSet
@@ -133,8 +119,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
-                  <div className="p-3">
-                    4k
+                  <div>
+                    <div className="p-3">4K</div>
                     <div className="keyBindContainer">
                       {userData.Keybinds["4"].map((_, idx) => (
                         <KeybindSet
@@ -146,8 +132,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
-                  <div className="p-3">
-                    7k
+                  <div>
+                    <div className="p-3">7K</div>
                     <div className="keyBindContainer">
                       {userData.Keybinds["7"].map((_, idx) => (
                         <KeybindSet
@@ -159,8 +145,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
-                  <div className="p-3">
-                    10k
+                  <div>
+                    <div className="p-3">10K</div>
                     <div className="keyBindContainer">
                       {userData.Keybinds["10"].map((_, idx) => (
                         <KeybindSet
@@ -172,8 +158,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
-                  <div className="p-3">
-                    20k
+                  <div>
+                    <div className="p-3">20K</div>
                     <div className="keyBindContainer">
                       {userData.Keybinds["20"].map((_, idx) => (
                         <KeybindSet
@@ -186,11 +172,14 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     </div>
                   </div>
                 </div>
-                <div className="text-xl">Gameplay</div>
+              </div>
+
+              <div className="flex flex-col gap-1 mb-3">
+                <div className="text-xl font-bold">Gameplay</div>
                 <div>
                   <div className="p-3">Judgement</div>
 
-                  <div className="flex gap-2 justify-center place-items-center">
+                  <div className="flex gap-4 justify-center place-items-center">
                     <div
                       onClick={() => changeJudgementIndex(-1)}
                       className="judgementAdjust"
@@ -206,7 +195,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     </div>
                   </div>
                   <div className="p-3">Scroll Speed</div>
-                  <div className="flex gap-2 justify-center place-items-center">
+                  <div className="flex gap-4 justify-center place-items-center">
                     <div
                       onClick={() => changeScrollSpeed(-1)}
                       className="scrollSpeedAdjust"
@@ -253,6 +242,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                   </div>
                 </div>
               </div>
+              
             </div>
           </div>
         </div>

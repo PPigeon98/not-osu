@@ -110,6 +110,7 @@ export const defaultUserData: UserData = {
       "Numpad1",
       "Numpad2",
       "Numpad3",
+      "Numpad8",
     ],
     taiko: ["d", "f", "j", "k"],
   },

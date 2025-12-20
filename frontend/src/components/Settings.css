@@ -7,11 +7,13 @@
   border: 2px solid oklch(86.9% 0.005 56.366); /* stone-300 */
   font-weight: bold;
   transition: all 0.15s;
+  flex-shrink: 0;
 }
 
 .keyBox:hover {
   border-color: oklch(60.6% 0.25 292.717); /* violet-500 */
-  color: oklch(60.6% 0.25 292.717)
+  color: oklch(60.6% 0.25 292.717);
+  cursor: pointer;
 }
 
 .keyBox:focus {
@@ -57,6 +59,7 @@
   display: flex; 
   justify-content: center;
   place-items: center;
+  flex-wrap: wrap;  
 }
 
 .scrollSpeedAdjust {
@@ -64,6 +67,7 @@
   border-radius: 0.25rem;    
   padding: 0.25rem;          
   font-size: 0.875rem; 
+  user-select: none;
 }
 
 .scrollSpeedAdjust:hover {
@@ -80,6 +84,7 @@
   padding-top: 0.25rem;  
   padding-bottom: 0.25rem; 
   font-size: 0.875rem;
+  user-select: none;
 }
 
 .judgementAdjust:hover {
