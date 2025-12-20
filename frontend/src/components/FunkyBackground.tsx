@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 const FunkyBackground = () => {
@@ -17,7 +17,7 @@ const FunkyBackground = () => {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000); // Black background to see the cube
 
-    const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+    const geometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
     const material = new THREE.MeshNormalMaterial();
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -31,9 +31,23 @@ const FunkyBackground = () => {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
-    
-    const currentMount = mountRef.current;
-    currentMount.appendChild(renderer.domElement);
+
+    // Style the canvas to ensure it's visible
+    const canvas = renderer.domElement;
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.display = 'block';
+    canvas.style.zIndex = '0';
+    canvas.style.pointerEvents = 'none';
+
+    // Append directly to body instead of the mount div
+    document.body.appendChild(canvas);
+
+    // Force an initial render
+    renderer.render(scene, camera);
 
     // Animation
     function animate(time: number) {
@@ -60,8 +74,8 @@ const FunkyBackground = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       renderer.setAnimationLoop(null);
-      if (currentMount && renderer.domElement) {
-        currentMount.removeChild(renderer.domElement);
+      if (canvas && canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas);
       }
       geometry.dispose();
       material.dispose();
@@ -69,13 +83,7 @@ const FunkyBackground = () => {
     };
   }, []);
 
-  return (
-    <div
-      ref={mountRef}
-      className="fixed top-0 left-0 w-full h-full -z-10"
-      style={{ pointerEvents: 'none' }}
-    />
-  );
+  return <div ref={mountRef} style={{ display: 'none' }} />;
 };
 
 

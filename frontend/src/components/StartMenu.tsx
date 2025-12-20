@@ -29,8 +29,8 @@ const StartMenu = () => {
 
   return (
     <>
-      <main className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF]">
-        <FunkyBackground />
+      <FunkyBackground />
+      <main className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF] relative z-10">
         <img 
           src={logo} 
           alt="Not~Osu! start screen logo" 
