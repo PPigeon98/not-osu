@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from "react";
 import useSound from "use-sound";
 import buttonHover1 from "../../public/sounds/button_hover_1.wav";
 import buttonClick1 from "../../public/sounds/button_click_1.wav";
+import InitUserData from "./InitUserData";
 
 const backendUrl = 'http://localhost:5000';
 
@@ -64,6 +65,10 @@ const SongSelect = () => {
   const handleMouseEnter = (beatmap: Beatmap) => {
     playHoverSound();
 
+    const stored = localStorage.getItem("userData");
+    const userData = stored ? JSON.parse(stored) : InitUserData();
+    const musicVolume = userData.MusicVolume / 100;
+
     const audioPath = encodeURI(`./beatmapsRaw/${beatmap.id}/${beatmap.songInfo.AudioFilename}`);
     const audio = new Audio(audioPath);
 
@@ -78,7 +83,7 @@ const SongSelect = () => {
 
     audioPathRef.current = audioPath;
     audio.currentTime = beatmap.songInfo.PreviewTime / 1000;
-    audio.volume = 0.2; // make this a setting later
+    audio.volume = musicVolume;
 
     audio.play()
 
