@@ -29,6 +29,8 @@ const defaultScrollSpeed = 2.5;
 const defaultTaikoScrollSpeed = 1.2;
 const defaultReceptorOffset = 11.11;
 const defaultTaikoReceptorOffset = 25;
+const defaultBackgroundBlur = 5;
+const defaultBackgroundOpacity = 0.6;
 
 const Settings = ({ open, onClose }: SettingsProps) => {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -37,6 +39,8 @@ const Settings = ({ open, onClose }: SettingsProps) => {
   const [taikoScrollSpeed, setTaikoScrollSpeed] = useState<number>(defaultTaikoScrollSpeed);
   const [receptorOffset, setReceptorOffset] = useState<number>(defaultReceptorOffset);
   const [taikoReceptorOffset, setTaikoReceptorOffset] = useState<number>(defaultTaikoReceptorOffset);
+  const [backgroundBlur, setBackgroundBlur] = useState<number>(defaultBackgroundBlur);
+  const [backgroundOpacity, setBackgroundOpacity] = useState<number>(defaultBackgroundOpacity);
 
   const changeScrollSpeed = (offset: number) => {
     let newOffset = scrollSpeed + offset;
@@ -76,6 +80,28 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     newOffset = Math.round(newOffset * 100) / 100;
 
     setTaikoReceptorOffset(newOffset);
+  };
+
+  const changeBackgroundBlur = (offset: number) => {
+    let newOffset = backgroundBlur + offset;
+    if (newOffset < 0) {
+      newOffset = 0;
+    }
+    newOffset = Math.round(newOffset * 100) / 100;
+
+    setBackgroundBlur(newOffset);
+  };
+
+  const changeBackgroundOpacity = (offset: number) => {
+    let newOffset = backgroundOpacity + offset;
+    if (newOffset < 0) {
+      newOffset = 0;
+    } else if (newOffset > 1) {
+      newOffset = 1;
+    }
+    newOffset = Math.round(newOffset * 100) / 100;
+
+    setBackgroundOpacity(newOffset);
   };
 
   const changeJudgementIndex = (offset: number) => {
@@ -173,6 +199,34 @@ const Settings = ({ open, onClose }: SettingsProps) => {
       prev ? { ...prev, TaikoReceptorOffset: taikoReceptorOffset.toString() } : prev
     );
   }, [taikoReceptorOffset]);
+
+  useEffect(() => {
+    if (userData?.BackgroundBlur === undefined) return;
+
+    const blur = userData.BackgroundBlur;
+
+    setBackgroundBlur(blur);
+  }, [userData?.BackgroundBlur]);
+
+  useEffect(() => {
+    setUserData((prev) =>
+      prev ? { ...prev, BackgroundBlur: backgroundBlur } : prev
+    );
+  }, [backgroundBlur]);
+
+  useEffect(() => {
+    if (userData?.BackgroundOpacity === undefined) return;
+
+    const opacity = userData.BackgroundOpacity;
+
+    setBackgroundOpacity(opacity);
+  }, [userData?.BackgroundOpacity]);
+
+  useEffect(() => {
+    setUserData((prev) =>
+      prev ? { ...prev, BackgroundOpacity: backgroundOpacity } : prev
+    );
+  }, [backgroundOpacity]);
 
   if (!userData) return null;
   return (
@@ -465,6 +519,98 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     >
                       {" "}
                       +1
+                    </div>
+                  </div>
+                  <div className="p-3">Background Blur</div>
+                  <div className="flex gap-2 justify-center place-items-center">
+                    <div
+                      onClick={() => changeBackgroundBlur(-1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -1
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundBlur(-0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.5
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundBlur(-0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.1
+                    </div>
+                    <div>{backgroundBlur}</div>
+                    <div
+                      onClick={() => changeBackgroundBlur(0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.1
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundBlur(0.5)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.5
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundBlur(1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +1
+                    </div>
+                  </div>
+                  <div className="p-3">Background Opacity</div>
+                  <div className="flex gap-2 justify-center place-items-center">
+                    <div
+                      onClick={() => changeBackgroundOpacity(-0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.1
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundOpacity(-0.05)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.05
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundOpacity(-0.01)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      -0.01
+                    </div>
+                    <div>{backgroundOpacity}</div>
+                    <div
+                      onClick={() => changeBackgroundOpacity(0.01)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.01
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundOpacity(0.05)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.05
+                    </div>
+                    <div
+                      onClick={() => changeBackgroundOpacity(0.1)}
+                      className="scrollSpeedAdjust"
+                    >
+                      {" "}
+                      +0.1
                     </div>
                   </div>
                 </div>
