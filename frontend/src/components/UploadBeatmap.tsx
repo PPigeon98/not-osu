@@ -4,7 +4,7 @@ import { useRef } from 'react';
 
 const backendUrl = 'http://localhost:5000'; // change this when deploying to vercel
 
-const UploadBeatmap = () => {
+const UploadBeatmap = ({ onUploadSuccess }: { onUploadSuccess: () => void; }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleButtonClick = () => {
@@ -29,6 +29,8 @@ const UploadBeatmap = () => {
       if (!response.ok) {
         throw new Error(await response.text());
       }
+
+      onUploadSuccess?.();
     } catch (error) {
       console.log('Beatmap upload failed:', error);
     } finally {

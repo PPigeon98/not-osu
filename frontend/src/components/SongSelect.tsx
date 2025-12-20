@@ -273,7 +273,7 @@ const SongSelect = () => {
             onClick={() => { navigate("/"); audioRef.current?.pause(); audioRef.current = null; audioPathRef.current = null; }}>
               <FirstPageRoundedIcon />
           </IconButton>
-          <UploadBeatmap />
+          <UploadBeatmap onUploadSuccess={fetchBeatmaps} />
         </Box>
       </main>
     </>
