@@ -266,11 +266,76 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     </div>
                   </div>
                   <div className="p-3">
+                    1k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["1"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={1}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    2k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["2"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={2}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    3k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["3"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={3}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
                     4k
                     <div className="keyBindContainer">
                       {userData.Keybinds["4"].map((_, idx) => (
                         <KeybindSet
                           keysNum={4}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    5k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["5"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={5}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    6k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["6"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={6}
                           keysIndex={idx}
                           userData={userData}
                           setUserData={setUserData}
@@ -292,11 +357,89 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     </div>
                   </div>
                   <div className="p-3">
+                    8k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["8"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={8}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    9k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["9"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={9}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
                     10k
                     <div className="keyBindContainer">
                       {userData.Keybinds["10"].map((_, idx) => (
                         <KeybindSet
                           keysNum={10}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    12k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["12"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={12}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    14k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["14"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={14}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    16k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["16"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={16}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    18k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["18"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={18}
                           keysIndex={idx}
                           userData={userData}
                           setUserData={setUserData}
