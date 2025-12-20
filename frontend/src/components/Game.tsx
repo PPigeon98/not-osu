@@ -245,7 +245,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
       <div
         className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat transform scale-105"
         style={{
-          backgroundImage: `url(${mapPath + String(songInfo['BackgroundFilename'])})`,
+          backgroundImage: `url("${encodeURI(mapPath + String(songInfo['BackgroundFilename']))}")`,
           filter: `blur(${userData.BackgroundBlur}px)`,
         }}
       />
@@ -255,7 +255,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
       />
       <audio
         ref={musicTime}
-        src={mapPath + songInfo['AudioFilename']}
+        src={encodeURI(mapPath + String(songInfo['AudioFilename']))}
         onLoadedData={() => {
           if (!hasStartedRef.current && musicTime.current) {
             hasStartedRef.current = true;

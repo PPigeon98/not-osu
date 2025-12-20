@@ -64,7 +64,7 @@ const SongSelect = () => {
   const handleMouseEnter = (beatmap: Beatmap) => {
     playHoverSound();
 
-    const audioPath = `./beatmapsRaw/${beatmap.id}/${beatmap.songInfo.AudioFilename}`;
+    const audioPath = encodeURI(`./beatmapsRaw/${beatmap.id}/${beatmap.songInfo.AudioFilename}`);
     const audio = new Audio(audioPath);
 
     if (audioPath === audioPathRef.current) {
@@ -243,7 +243,7 @@ const SongSelect = () => {
               marginTop: 1,
               color: 'white','&:hover': {backgroundColor: '#6A2C85'}
             }}
-            onClick={() => navigate("/")}>
+            onClick={() => { navigate("/"); audioRef.current?.pause(); audioRef.current = null; audioPathRef.current = null; }}>
               <FirstPageRoundedIcon />
           </IconButton>
           <UploadBeatmap />

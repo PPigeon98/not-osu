@@ -23,7 +23,7 @@ const MapLoader = () => {
   const mapFileName = `${beatmapName}.osu`;
 
   useEffect(() => {
-    const theMap = mapPath + mapFileName;
+    const theMap = encodeURI(mapPath + mapFileName);
     const loadMap = async () => {
       const file = await fetch(theMap);
       const fileString = await file.text();
