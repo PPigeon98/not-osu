@@ -11,6 +11,7 @@ export type HitObject = {
   endTime?: number;
 };
 
+
 export type JudgementName = 'Marvelous' | 'Perfect' | 'Great' | 'Good' | 'Okay' | 'Miss';
 
 export type LeaderboardScore = {

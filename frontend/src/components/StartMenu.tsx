@@ -11,9 +11,9 @@ const StartMenu = () => {
   return (
     <>
       <main className="flex flex-col justify-center items-center w-screen h-screen gap-3 text-[#FFFFFF]">
-        <img 
-          src={logo} 
-          alt="Not~Osu! start screen logo" 
+        <img
+          src={logo}
+          alt="Not~Osu! start screen logo"
           style={{ height: "auto", width: "30%" }}
         />
         <MenuButton onClick={() => navigate("/select")}>Start!</MenuButton>
