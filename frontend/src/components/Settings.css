@@ -59,28 +59,30 @@
   place-items: center;
 }
 
-/*
-Source - https://stackoverflow.com/a
-Posted by Sagar Roy
-Retrieved 2025-12-19, License - CC BY-SA 4.0
-*/
-
-/* For Firefox Browser */
-/* .scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #000 #fff;
-} */
-
-
-/* For Chrome, EDGE, Opera, Others */
-/* .scrollbar::-webkit-scrollbar {
-  width: 20px;
+.scrollSpeedAdjust {
+  background-color: #404040;
+  border-radius: 0.25rem;    
+  padding: 0.25rem;          
+  font-size: 0.875rem; 
 }
 
-.scrollbar::-webkit-scrollbar-track { 
-  background: #fff;
+.scrollSpeedAdjust:hover {
+  cursor: pointer;
+  background-color: oklch(44.4% 0.011 73.639)
 }
 
-.scrollbar::-webkit-scrollbar-thumb { 
-  background:#000;
-} */
+
+.judgementAdjust {
+  background-color: #404040; 
+  border-radius: 0.25rem;  
+  padding-left: 0.5rem;   
+  padding-right: 0.5rem;  
+  padding-top: 0.25rem;  
+  padding-bottom: 0.25rem; 
+  font-size: 0.875rem;
+}
+
+.judgementAdjust:hover {
+  cursor: pointer;
+  background-color: oklch(44.4% 0.011 73.639)
+}

@@ -172,6 +172,19 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                       ))}
                     </div>
                   </div>
+                  <div className="p-3">
+                    20k
+                    <div className="keyBindContainer">
+                      {userData.Keybinds["20"].map((_, idx) => (
+                        <KeybindSet
+                          keysNum={20}
+                          keysIndex={idx}
+                          userData={userData}
+                          setUserData={setUserData}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <div className="text-xl">Gameplay</div>
                 <div>
@@ -180,14 +193,14 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                   <div className="flex gap-2 justify-center place-items-center">
                     <div
                       onClick={() => changeJudgementIndex(-1)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="judgementAdjust"
                     >
                       &lt;
                     </div>
                     {JudgementWindows[judgementWindowIndex]}
                     <div
                       onClick={() => changeJudgementIndex(1)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="judgementAdjust"
                     >
                       &gt;
                     </div>
@@ -196,21 +209,21 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                   <div className="flex gap-2 justify-center place-items-center">
                     <div
                       onClick={() => changeScrollSpeed(-1)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="scrollSpeedAdjust"
                     >
                       {" "}
                       -1
                     </div>
                     <div
                       onClick={() => changeScrollSpeed(-0.5)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="scrollSpeedAdjust"
                     >
                       {" "}
                       -0.5
                     </div>
                     <div
                       onClick={() => changeScrollSpeed(-0.1)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="scrollSpeedAdjust"
                     >
                       {" "}
                       -0.1
@@ -218,21 +231,21 @@ const Settings = ({ open, onClose }: SettingsProps) => {
                     <div>{scrollSpeed}</div>
                     <div
                       onClick={() => changeScrollSpeed(0.1)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="scrollSpeedAdjust"
                     >
                       {" "}
                       +0.1
                     </div>
                     <div
                       onClick={() => changeScrollSpeed(0.5)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="scrollSpeedAdjust"
                     >
                       {" "}
                       +0.5
                     </div>
                     <div
                       onClick={() => changeScrollSpeed(1)}
-                      className="bg-stone-700 rounded p-1 text-sm"
+                      className="scrollSpeedAdjust"
                     >
                       {" "}
                       +1
