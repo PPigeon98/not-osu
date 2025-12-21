@@ -1,6 +1,6 @@
-<div style="display: flex; align-items: center; justify-content: center; ">
+<p align="center">
    <img src="frontend/public/not_osu_logo_alt.svg" alt="Not~Osu!"/>
-</div>
+</p>
 
 ## SUMMARY
 
