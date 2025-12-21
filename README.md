@@ -1,6 +1,6 @@
-<h1 align="center">
-  Not~Osu!
-</h1>
+<div style="display: flex; align-items: center; justify-content: center; ">
+   <img src="frontend/public/not_osu_logo_alt.svg" alt="Not~Osu!"/>
+</div>
 
 ## SUMMARY
 
