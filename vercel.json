@@ -3,19 +3,14 @@
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
-  "functions": {
-    "backend/serverless.ts": {
-      "includeFiles": "backend/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/backend/serverless.ts"
+      "destination": "/api/serverless"
     },
     {
       "source": "/echo",
-      "destination": "/backend/serverless.ts"
+      "destination": "/api/serverless"
     }
   ]
 }
