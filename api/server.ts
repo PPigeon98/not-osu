@@ -33,8 +33,14 @@ app.use(morgan('dev'));
 
 const PORT: number = parseInt(process.env.PORT || '5000');
 const HOST: string = process.env.IP || '127.0.0.1';
-const BEATMAPS_RAW_DIR = path.resolve(__dirname, '../frontend/public/beatmapsRaw');
-const BEATMAPS_PARSED_DIR = path.resolve(__dirname, '../frontend/public/beatmaps');
+// Use /tmp on Vercel (read-write), otherwise use public directory
+const IS_VERCEL = process.env.VERCEL === '1';
+const BEATMAPS_RAW_DIR = IS_VERCEL 
+  ? path.join('/tmp', 'beatmapsRaw')
+  : path.resolve(__dirname, '../frontend/public/beatmapsRaw');
+const BEATMAPS_PARSED_DIR = IS_VERCEL
+  ? path.join('/tmp', 'beatmaps')
+  : path.resolve(__dirname, '../frontend/public/beatmaps');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -551,6 +557,79 @@ app.get('/api/beatmaps', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Failed to fetch beatmaps:', error);
     res.status(500).json({ error: 'Failed to fetch beatmaps' });
+  }
+});
+
+// Serve beatmap wysi files (needed when using /tmp on Vercel)
+app.get('/api/beatmaps/:setId/:beatmapId.wysi', async (req: Request, res: Response) => {
+  try {
+    const { setId, beatmapId } = req.params;
+    const wysiPath = path.join(BEATMAPS_PARSED_DIR, setId, `${beatmapId}.wysi`);
+    
+    try {
+      const content = await fs.promises.readFile(wysiPath, 'utf8');
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).send(content);
+    } catch (error) {
+      res.status(404).json({ error: 'Beatmap not found' });
+    }
+  } catch (error) {
+    console.error('Failed to serve beatmap file:', error);
+    res.status(500).json({ error: 'Failed to serve beatmap file' });
+  }
+});
+
+// Serve beatmap audio files (needed when using /tmp on Vercel)
+app.get('/api/beatmaps/:setId/song.mp3', async (req: Request, res: Response) => {
+  try {
+    const { setId } = req.params;
+    const audioPath = path.join(BEATMAPS_PARSED_DIR, setId, 'song.mp3');
+    
+    try {
+      const stat = await fs.promises.stat(audioPath);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', stat.size);
+      const fileStream = fs.createReadStream(audioPath);
+      fileStream.pipe(res);
+    } catch (error) {
+      res.status(404).json({ error: 'Audio file not found' });
+    }
+  } catch (error) {
+    console.error('Failed to serve audio file:', error);
+    res.status(500).json({ error: 'Failed to serve audio file' });
+  }
+});
+
+// Serve beatmap background files (needed when using /tmp on Vercel)
+// Use a catch-all route for background files with any extension
+app.get('/api/beatmaps/:setId/:bgFileName', async (req: Request, res: Response) => {
+  try {
+    const { setId, bgFileName } = req.params;
+    // Only serve files that start with 'bg' (background files)
+    if (!bgFileName.startsWith('bg')) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    const bgPath = path.join(BEATMAPS_PARSED_DIR, setId, bgFileName);
+    
+    try {
+      const stat = await fs.promises.stat(bgPath);
+      const ext = path.extname(bgFileName).toLowerCase();
+      // Determine content type based on extension
+      const contentType = ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' 
+        : ext === '.png' ? 'image/png' 
+        : ext === '.gif' ? 'image/gif'
+        : 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Length', stat.size);
+      const fileStream = fs.createReadStream(bgPath);
+      fileStream.pipe(res);
+    } catch (error) {
+      res.status(404).json({ error: 'Background file not found' });
+    }
+  } catch (error) {
+    console.error('Failed to serve background file:', error);
+    res.status(500).json({ error: 'Failed to serve background file' });
   }
 });
 
