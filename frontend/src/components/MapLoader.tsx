@@ -20,10 +20,9 @@ const MapLoader = () => {
   const { beatmapId, beatmapSetId, beatmapName } = location.state;
 
   const mapPath = `./beatmaps/${beatmapSetId}/`;
-  const wysiFileName = `${beatmapId}.wysi`;
 
   useEffect(() => {
-    const theMap = encodeURI(mapPath + wysiFileName);
+    const theMap = encodeURI(mapPath + `${beatmapId}.wysi`);
     const loadMap = async () => {
       const file = await fetch(theMap);
       const parsed = await file.json();
@@ -32,7 +31,7 @@ const MapLoader = () => {
     };
 
     loadMap();
-  }, [beatmapId, beatmapSetId, mapPath, wysiFileName]);
+  }, [beatmapId, beatmapSetId, mapPath]);
 
 
   // can use a loading screen here instead of null
