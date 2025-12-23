@@ -21,8 +21,8 @@ type GameProps = {
 
 const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {  
   const navigate = useNavigate();
-  const [currentTime, setCurrentTime] = useState<number>(0);
-  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
+  const [, setCurrentTime] = useState<number>(0);
+  const [, setPressedKeys] = useState<Set<string>>(new Set());
   const pressedKeysRef = useRef<Set<string>>(new Set());
   const [progress, setProgress] = useState<number>(0);
   const [countdown, setCountdown] = useState<number | null>(null);

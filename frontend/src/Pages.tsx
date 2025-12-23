@@ -14,7 +14,7 @@ const Pages = () => {
         <Route path="/" element={<StartMenu />} />
         <Route path="/select" element={<SongSelect />} />
         <Route path="/game" element={<MapLoader />} />
-        <Route path="/gameover" element={<GameOver />} />
+        <Route path="/gameover" element={<GameOver open={false} completionPercent={0} />} />
         <Route path="/passedmap" element={<PassedMap />} />
       </Routes>
     </>

@@ -25,12 +25,6 @@ const JudgementWindows = [
   "Impossible",
 ];
 
-const defaultScrollSpeed = 2.5;
-const defaultTaikoScrollSpeed = 1.2;
-const defaultReceptorOffset = 11.11;
-const defaultTaikoReceptorOffset = 25;
-const defaultBackgroundBlur = 5;
-const defaultBackgroundOpacity = 0.6;
 
 const Settings = ({ open, onClose }: SettingsProps) => {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -73,7 +67,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     newOffset = Math.round(newOffset * 100) / 100;
 
     setUserData((prev) =>
-      prev ? { ...prev, ReceptorOffset: newOffset } : prev
+      prev ? { ...prev, ReceptorOffset: String(newOffset) } : prev
     );
   };
 
@@ -87,7 +81,7 @@ const Settings = ({ open, onClose }: SettingsProps) => {
     newOffset = Math.round(newOffset * 100) / 100;
 
     setUserData((prev) =>
-      prev ? { ...prev, TaikoReceptorOffset: newOffset } : prev
+      prev ? { ...prev, TaikoReceptorOffset: String(newOffset) } : prev
     );
   };
 
