@@ -26,8 +26,6 @@ app.use(cors());
 // for logging errors (print to terminal)
 app.use(morgan('dev'));
 
-connectDB();
-
 const PORT: number = parseInt(process.env.PORT || '5000');
 const HOST: string = process.env.IP || '127.0.0.1';
 const BEATMAPS_DIR = path.resolve(__dirname, '../../frontend/public/beatmapsRaw');
