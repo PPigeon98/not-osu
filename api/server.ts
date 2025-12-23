@@ -9,7 +9,12 @@ import fs from 'fs';
 import fg from 'fast-glob';
 import { pipeline } from 'stream/promises';
 import { createHash } from 'crypto';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { echo } from './echo';
+import ffmpeg from 'ffmpeg';
+
+const execAsync = promisify(exec);
 
 interface ErrorObject {
   error: string;
@@ -265,54 +270,118 @@ const parseBeatmapsFromFolder = async (folderPath: string): Promise<void> => {
     console.log(`Parsing beatmaps from folder: ${folderPath}`);
     console.log(`Found ${osuFiles.length} .osu file(s)`);
 
+    // Parse all files first to get the beatmapSetId
+    const parsedFiles: Array<{ osuFile: string; parsed: { beatmapSetId: string; beatmapId: string; data: ParsedBeatmap } | null }> = [];
     for (const osuFile of osuFiles) {
       console.log(`Parsing: ${osuFile}`);
       const parsed = await parseOsuFile(osuFile, folderName);
-      if (!parsed) {
-        continue;
-      }
+      parsedFiles.push({ osuFile, parsed });
+    }
 
-      const { beatmapSetId, beatmapId, data } = parsed;
+    // Group by beatmapSetId and process shared resources once
+    const beatmapSets = new Map<string, Array<{ osuFile: string; parsed: { beatmapSetId: string; beatmapId: string; data: ParsedBeatmap } }>>();
+    for (const { osuFile, parsed } of parsedFiles) {
+      if (!parsed) continue;
+      const { beatmapSetId } = parsed;
+      if (!beatmapSets.has(beatmapSetId)) {
+        beatmapSets.set(beatmapSetId, []);
+      }
+      beatmapSets.get(beatmapSetId)!.push({ osuFile, parsed });
+    }
+
+    // Process each beatmap set
+    for (const [beatmapSetId, files] of beatmapSets) {
       const parsedFolder = path.join(BEATMAPS_PARSED_DIR, beatmapSetId);
       await fs.promises.mkdir(parsedFolder, { recursive: true });
 
-      // Copy and rename audio file
-      const audioFilename = String(data.songInfo['AudioFilename'] || '');
-      let newAudioFilename = 'song';
-      if (audioFilename) {
-        const audioExt = path.extname(audioFilename);
-        newAudioFilename = `song${audioExt}`;
-        const sourceAudioPath = path.join(path.dirname(osuFile), audioFilename);
-        const destAudioPath = path.join(parsedFolder, newAudioFilename);
-        try {
-          await fs.promises.copyFile(sourceAudioPath, destAudioPath);
-          // Update songInfo with new filename
-          data.songInfo['AudioFilename'] = newAudioFilename;
-        } catch (error) {
-          console.warn(`Failed to copy audio file ${audioFilename}:`, error);
+      // Process audio file once per set (all beatmaps share the same audio)
+      let audioProcessed = false;
+      let newAudioFilename = 'song.mp3';
+      if (files.length > 0) {
+        const firstFile = files[0];
+        const audioFilename = String(firstFile.parsed.data.songInfo['AudioFilename'] || '');
+        if (audioFilename) {
+          const sourceAudioPath = path.join(path.dirname(firstFile.osuFile), audioFilename);
+          const destAudioPath = path.join(parsedFolder, newAudioFilename);
+          try {
+            // Check if audio file already exists (skip if already processed)
+            try {
+              await fs.promises.access(destAudioPath);
+              console.log(`Audio file already exists, skipping: ${destAudioPath}`);
+              audioProcessed = true;
+            } catch {
+              // File doesn't exist, process it
+              const ffmpegCmd = `ffmpeg -f lavfi -t 3 -i anullsrc=channel_layout=stereo:sample_rate=44100 -i "${sourceAudioPath}" -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1[out]" -map "[out]" -acodec libmp3lame -y "${destAudioPath}"`;
+              await execAsync(ffmpegCmd);
+              console.log(`Processed audio file with 3s silence: ${destAudioPath}`);
+              audioProcessed = true;
+            }
+          } catch (error) {
+            console.warn(`Failed to process audio file ${audioFilename}:`, error);
+          }
         }
       }
 
-      // Copy and rename background file
-      const bgFilename = String(data.songInfo['BackgroundFilename'] || '');
+      // Process background file once per set
+      let bgProcessed = false;
       let newBgFilename = 'bg';
-      if (bgFilename) {
-        const bgExt = path.extname(bgFilename);
-        newBgFilename = `bg${bgExt}`;
-        const sourceBgPath = path.join(path.dirname(osuFile), bgFilename);
-        const destBgPath = path.join(parsedFolder, newBgFilename);
-        try {
-          await fs.promises.copyFile(sourceBgPath, destBgPath);
-          // Update songInfo with new filename
-          data.songInfo['BackgroundFilename'] = newBgFilename;
-        } catch (error) {
-          console.warn(`Failed to copy background file ${bgFilename}:`, error);
+      if (files.length > 0) {
+        const firstFile = files[0];
+        const bgFilename = String(firstFile.parsed.data.songInfo['BackgroundFilename'] || '');
+        if (bgFilename) {
+          const bgExt = path.extname(bgFilename);
+          newBgFilename = `bg${bgExt}`;
+          const sourceBgPath = path.join(path.dirname(firstFile.osuFile), bgFilename);
+          const destBgPath = path.join(parsedFolder, newBgFilename);
+          try {
+            await fs.promises.copyFile(sourceBgPath, destBgPath);
+            console.log(`Copied background file: ${destBgPath}`);
+            bgProcessed = true;
+          } catch (error) {
+            console.warn(`Failed to copy background file ${bgFilename}:`, error);
+          }
         }
       }
 
-      // Write .wysi file (with updated filenames)
-      const wysiPath = path.join(parsedFolder, `${beatmapId}.wysi`);
-      await fs.promises.writeFile(wysiPath, JSON.stringify(data, null, 2), 'utf8');
+      // Write .wysi file for each beatmap
+      for (const { parsed } of files) {
+        const { beatmapId, data } = parsed;
+        
+        // Update songInfo with processed filenames
+        if (audioProcessed) {
+          data.songInfo['AudioFilename'] = newAudioFilename;
+        }
+        if (bgProcessed) {
+          data.songInfo['BackgroundFilename'] = newBgFilename;
+        }
+
+        // Add 3 second delay to timing values (3000ms)
+        const SILENCE_OFFSET_MS = 3000;
+        
+        // Offset PreviewTime if it exists
+        if (data.songInfo['PreviewTime'] !== undefined) {
+          const previewTime = data.songInfo['PreviewTime'] as number;
+          if (previewTime >= 0) {
+            data.songInfo['PreviewTime'] = previewTime + SILENCE_OFFSET_MS;
+          }
+        }
+
+        // Offset all hitObjects times
+        for (const hitObject of data.hitObjects) {
+          hitObject.time += SILENCE_OFFSET_MS;
+          if (hitObject.endTime !== undefined) {
+            hitObject.endTime += SILENCE_OFFSET_MS;
+          }
+        }
+
+        const wysiPath = path.join(parsedFolder, `${beatmapId}.wysi`);
+        try {
+          await fs.promises.writeFile(wysiPath, JSON.stringify(data, null, 2), 'utf8');
+          console.log(`Created .wysi file: ${wysiPath}`);
+        } catch (error) {
+          console.error(`Failed to write .wysi file ${wysiPath}:`, error);
+        }
+      }
     }
 
     // Remove the raw folder after successful parsing
