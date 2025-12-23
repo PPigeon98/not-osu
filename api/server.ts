@@ -11,8 +11,8 @@ import { pipeline } from 'stream/promises';
 import { createHash } from 'crypto';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import ffmpegPath from 'ffmpeg-static';
 import { echo } from './echo';
-import ffmpeg from 'ffmpeg';
 
 const execAsync = promisify(exec);
 
@@ -315,6 +315,7 @@ const parseBeatmapsFromFolder = async (folderPath: string): Promise<void> => {
 
       // Process audio file once per set (all beatmaps share the same audio)
       let audioProcessed = false;
+      let audioHasSilence = false; // tracks whether we actually prepended 3s silence
       let newAudioFilename = 'song.mp3';
       if (files.length > 0) {
         const firstFile = files[0];
@@ -328,12 +329,22 @@ const parseBeatmapsFromFolder = async (folderPath: string): Promise<void> => {
               await fs.promises.access(destAudioPath);
               console.log(`Audio file already exists, skipping: ${destAudioPath}`);
               audioProcessed = true;
+              // Assume previously processed file already has the 3s silence
+              audioHasSilence = true;
             } catch {
-              // File doesn't exist, process it
-              const ffmpegCmd = `ffmpeg -f lavfi -t 3 -i anullsrc=channel_layout=stereo:sample_rate=44100 -i "${sourceAudioPath}" -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1[out]" -map "[out]" -acodec libmp3lame -y "${destAudioPath}"`;
-              await execAsync(ffmpegCmd);
-              console.log(`Processed audio file with 3s silence: ${destAudioPath}`);
-              audioProcessed = true;
+              // File doesn't exist yet; use ffmpeg-static if available, otherwise fall back to copy.
+              if (!ffmpegPath) {
+                await fs.promises.copyFile(sourceAudioPath, destAudioPath);
+                console.warn('ffmpeg-static not available; copied audio without 3s silence:', destAudioPath);
+                audioProcessed = true;
+                audioHasSilence = false;
+              } else {
+                const ffmpegCmd = `"${ffmpegPath}" -f lavfi -t 3 -i anullsrc=channel_layout=stereo:sample_rate=44100 -i "${sourceAudioPath}" -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1[out]" -map "[out]" -acodec libmp3lame -y "${destAudioPath}"`;
+                await execAsync(ffmpegCmd);
+                console.log(`Processed audio file with 3s silence: ${destAudioPath}`);
+                audioProcessed = true;
+                audioHasSilence = true;
+              }
             }
           } catch (error) {
             console.warn(`Failed to process audio file ${audioFilename}:`, error);
@@ -374,22 +385,24 @@ const parseBeatmapsFromFolder = async (folderPath: string): Promise<void> => {
           data.songInfo['BackgroundFilename'] = newBgFilename;
         }
 
-        // Add 3 second delay to timing values (3000ms)
-        const SILENCE_OFFSET_MS = 3000;
-        
-        // Offset PreviewTime if it exists
-        if (data.songInfo['PreviewTime'] !== undefined) {
-          const previewTime = data.songInfo['PreviewTime'] as number;
-          if (previewTime >= 0) {
-            data.songInfo['PreviewTime'] = previewTime + SILENCE_OFFSET_MS;
+        // Add 3 second delay to timing values (3000ms) ONLY if we actually added 3s of silence
+        if (audioHasSilence) {
+          const SILENCE_OFFSET_MS = 3000;
+          
+          // Offset PreviewTime if it exists
+          if (data.songInfo['PreviewTime'] !== undefined) {
+            const previewTime = data.songInfo['PreviewTime'] as number;
+            if (previewTime >= 0) {
+              data.songInfo['PreviewTime'] = previewTime + SILENCE_OFFSET_MS;
+            }
           }
-        }
 
-        // Offset all hitObjects times
-        for (const hitObject of data.hitObjects) {
-          hitObject.time += SILENCE_OFFSET_MS;
-          if (hitObject.endTime !== undefined) {
-            hitObject.endTime += SILENCE_OFFSET_MS;
+          // Offset all hitObjects times
+          for (const hitObject of data.hitObjects) {
+            hitObject.time += SILENCE_OFFSET_MS;
+            if (hitObject.endTime !== undefined) {
+              hitObject.endTime += SILENCE_OFFSET_MS;
+            }
           }
         }
 
