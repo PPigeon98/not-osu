@@ -69,7 +69,7 @@ const SongSelect = () => {
     const userData = stored ? JSON.parse(stored) : InitUserData();
     const musicVolume = userData.MusicVolume / 100;
 
-    const audioPath = encodeURI(`${backendUrl}/beatmaps/${beatmap.setId}/song.mp3`);
+    const audioPath = encodeURI(`./beatmaps/${beatmap.setId}/${beatmap.songInfo.AudioFilename}`);
     const audio = new Audio(audioPath);
 
     if (audioPath === audioPathRef.current) {
