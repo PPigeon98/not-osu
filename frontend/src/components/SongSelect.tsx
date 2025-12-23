@@ -24,7 +24,8 @@ type BeatmapSongInfo = {
 };
 
 type Beatmap = {
-  id: number;
+  id: string;
+  setId: string;
   name: string;
   songInfo: BeatmapSongInfo;
 };
@@ -68,7 +69,7 @@ const SongSelect = () => {
     const userData = stored ? JSON.parse(stored) : InitUserData();
     const musicVolume = userData.MusicVolume / 100;
 
-    const audioPath = encodeURI(`./beatmapsRaw/${beatmap.id}/${beatmap.songInfo.AudioFilename}`);
+    const audioPath = encodeURI(`./beatmaps/${beatmap.setId}/${beatmap.songInfo.AudioFilename}`);
     const audio = new Audio(audioPath);
 
     if (audioPath === audioPathRef.current) {
@@ -205,7 +206,7 @@ const SongSelect = () => {
               <Link
                 key={i}
                 to="/game"
-                state={{ beatmapId: beatmap.id, beatmapName: beatmap.name }}
+                state={{ beatmapId: beatmap.id, beatmapSetId: beatmap.setId, beatmapName: beatmap.name }}
                 className="cursor-pointer hover:underline hover:text-[#934AB3] flex items-center gap-3 w-full pl-4 rounded-r-full hover:bg-purple-500/10 transition-all duration-[600ms]"
                 onMouseEnter={() => handleMouseEnter(beatmap)}
                 onClick={() => { playClickSound(); audioRef.current?.pause(); audioRef.current = null; audioPathRef.current = null; }}

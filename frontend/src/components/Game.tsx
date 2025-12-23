@@ -204,7 +204,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     }
   }, []);
 
-  if (songInfo['Mode'] === '1') {
+  if (songInfo['Mode'] === 1 || songInfo['Mode'] === '1') {
     TaikoRenderer({
       songInfo,
       userData,
