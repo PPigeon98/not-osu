@@ -1,6 +1,6 @@
-import {
-  ErrorObject
-} from './interface';
+interface ErrorObject {
+  error: string;
+}
 
 function echo(
   value: string
@@ -13,3 +13,4 @@ function echo(
 }
 
 export { echo };
+

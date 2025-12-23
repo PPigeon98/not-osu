@@ -8,12 +8,11 @@ import path from 'path';
 import fs from 'fs';
 import fg from 'fast-glob';
 import { pipeline } from 'stream/promises';
-import connectDB from './config';
-
-import {
-  ErrorObject
-} from './interface';
 import { echo } from './echo';
+
+interface ErrorObject {
+  error: string;
+}
 
 dotenv.config();
 
@@ -28,7 +27,7 @@ app.use(morgan('dev'));
 
 const PORT: number = parseInt(process.env.PORT || '5000');
 const HOST: string = process.env.IP || '127.0.0.1';
-const BEATMAPS_DIR = path.resolve(__dirname, '../../frontend/public/beatmapsRaw');
+const BEATMAPS_DIR = path.resolve(__dirname, '../frontend/public/beatmapsRaw');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -232,17 +231,20 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error });
 });
 
-// // Start server
-// const server = app.listen(PORT, HOST, () => {
-//   console.log(`⚡️ Server started on port ${PORT} at ${HOST}`);
-// });
+// Start server only if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`⚡️ Server started on port ${PORT} at ${HOST}`);
+  });
 
-// // Handle Ctrl+C gracefully
-// process.on('SIGINT', () => {
-//   server.close(() => {
-//     console.log('Shutting down server gracefully.');
-//     process.exit();
-//   });
-// });
+  // Handle Ctrl+C gracefully
+  process.on('SIGINT', () => {
+    server.close(() => {
+      console.log('Shutting down server gracefully.');
+      process.exit();
+    });
+  });
+}
 
 export default app;
+

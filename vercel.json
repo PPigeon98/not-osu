@@ -4,11 +4,6 @@
   "installCommand": "npm install && cd api && npm install",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
-  "functions": {
-    "api/serverless.ts": {
-      "includeFiles": "backend/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
