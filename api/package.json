@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "dev": "ts-node-dev -T server.ts"
+  },
   "dependencies": {
     "@vercel/node": "^3.0.0",
     "cors": "^2.8.5",
@@ -16,6 +19,7 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.2.1",
     "@types/unzipper": "^0.10.11",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
   }
 }
