@@ -17,7 +17,7 @@ const MapLoader = () => {
   const [hitObjects, setHitObjects] = useState<HitObject[] | null>(null);
   const [songInfo, setSongInfo] = useState<SongInfo | null>(null);
   const location = useLocation();
-  const { beatmapId, beatmapSetId, beatmapName } = location.state;
+  const { beatmapId, beatmapSetId } = location.state;
 
   const mapPath = `./beatmaps/${beatmapSetId}/`;
 
