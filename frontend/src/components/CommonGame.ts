@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export const backendUrl = 'http://localhost:5000';
+export const backendUrl = import.meta.env.VITE_API_URL;
 
 export type SongInfo = Record<string, string | number>;
 
