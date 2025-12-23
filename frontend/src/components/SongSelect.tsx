@@ -11,8 +11,7 @@ import useSound from "use-sound";
 import buttonHover1 from "../../public/sounds/button_hover_1.wav";
 import buttonClick1 from "../../public/sounds/button_click_1.wav";
 import InitUserData from "./InitUserData";
-
-const backendUrl = 'http://localhost:5000';
+import { backendUrl } from "./CommonGame";
 
 type BeatmapSongInfo = {
   AudioFilename: string;

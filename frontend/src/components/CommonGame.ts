@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+export const backendUrl = 'http://localhost:5000';
+
 export type SongInfo = Record<string, string | number>;
 
 export type HitObject = {

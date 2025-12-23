@@ -1,8 +1,7 @@
 import Button from '@mui/material/Button';
 import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
 import { useRef } from 'react';
-
-const backendUrl = 'http://localhost:5000'; // change this when deploying to vercel
+import { backendUrl } from './CommonGame';
 
 const UploadBeatmap = ({ onUploadSuccess }: { onUploadSuccess: () => void; }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
