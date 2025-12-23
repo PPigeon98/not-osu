@@ -49,7 +49,7 @@ const SongSelect = () => {
 
   const fetchBeatmaps = async () => {
     try {
-      const response = await fetch(`${backendUrl}/api/beatmaps`);
+      const response = await fetch(`${backendUrl}/beatmaps`);
       if (!response.ok) {
         throw new Error(await response.text());
       }

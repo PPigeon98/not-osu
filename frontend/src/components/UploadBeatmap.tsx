@@ -20,7 +20,7 @@ const UploadBeatmap = ({ onUploadSuccess }: { onUploadSuccess: () => void; }) =>
     formData.append('beatmap', file);
 
     try {
-      const response = await fetch(`${backendUrl}/api/beatmaps/upload`, {
+      const response = await fetch(`${backendUrl}/beatmaps/upload`, {
         method: 'POST',
         body: formData,
       });
