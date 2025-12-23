@@ -1,6 +1,25 @@
 {
   "dependencies": {
-    "@vercel/node": "^3.0.0"
+    "@vercel/node": "^3.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "fast-glob": "^3.3.3",
+    "mongoose": "^8.15.1",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "sync-request-curl": "^3.3.3",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/mongoose": "^5.11.96",
+    "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.2.1",
+    "@types/unzipper": "^0.10.11",
+    "typescript": "^5.9.2"
   }
 }
 
