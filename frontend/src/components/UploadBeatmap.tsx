@@ -11,24 +11,29 @@ const UploadBeatmap = ({ onUploadSuccess }: { onUploadSuccess: () => void; }) =>
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('beatmap', file);
-
     try {
-      const response = await fetch(`${backendUrl}/beatmaps/upload`, {
-        method: 'POST',
-        body: formData,
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('beatmap', file);
+
+        const response = await fetch(`${backendUrl}/beatmaps/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        return response;
       });
 
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
+      await Promise.all(uploadPromises);
       onUploadSuccess?.();
     } catch (error) {
       console.log('Beatmap upload failed:', error);
@@ -53,12 +58,13 @@ const UploadBeatmap = ({ onUploadSuccess }: { onUploadSuccess: () => void; }) =>
           },
         }}
       >
-        Upload Beatmap (.osz)
+        Upload Beatmap(s) (.osz)
       </Button>
       <input
         ref={inputRef}
         type="file"
         accept=".osz"
+        multiple
         className="hidden"
         onChange={handleFileChange}
       />
