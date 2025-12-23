@@ -33,8 +33,27 @@ app.use(morgan('dev'));
 
 const PORT: number = parseInt(process.env.PORT || '5000');
 const HOST: string = process.env.IP || '127.0.0.1';
-const BEATMAPS_RAW_DIR = path.resolve(__dirname, '../frontend/public/beatmapsRaw');
-const BEATMAPS_PARSED_DIR = path.resolve(__dirname, '../frontend/public/beatmaps');
+
+// In Vercel, write beatmaps into /tmp (the only writable area).
+// Locally, keep using the public/beatmaps* folders so the frontend can read them directly.
+const IS_VERCEL = process.env.VERCEL === '1';
+
+// Where raw .osz contents are extracted
+const BEATMAPS_RAW_DIR = IS_VERCEL
+  ? path.resolve('/tmp/beatmapsRaw')
+  : path.resolve(__dirname, '../frontend/public/beatmapsRaw');
+
+// Parsed beatmaps (.wysi, song.mp3, bg.*)
+const BEATMAPS_PARSED_DIR_PUBLIC = path.resolve(__dirname, '../frontend/public/beatmaps');
+const BEATMAPS_PARSED_DIR_TMP = path.resolve('/tmp/beatmaps');
+
+// Primary parsed-dir used for writing new beatmaps
+const BEATMAPS_PARSED_DIR = IS_VERCEL ? BEATMAPS_PARSED_DIR_TMP : BEATMAPS_PARSED_DIR_PUBLIC;
+
+// Directories we read from when listing beatmaps (SongSelect should see both)
+const BEATMAPS_PARSED_DIRS = IS_VERCEL
+  ? [BEATMAPS_PARSED_DIR_PUBLIC, BEATMAPS_PARSED_DIR_TMP]
+  : [BEATMAPS_PARSED_DIR_PUBLIC];
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -524,10 +543,25 @@ const getMetadata = (fileString: string) => {
 
 app.get('/api/beatmaps', async (req: Request, res: Response) => {
   try {
-    const wysiFiles = await fg('**/*.wysi', { cwd: BEATMAPS_PARSED_DIR, absolute: true });
+    // Collect .wysi files from all configured beatmap directories.
+    // On Vercel this will include both /tmp/beatmaps and public/beatmaps.
+    let wysiFiles: string[] = [];
+
+    for (const dir of BEATMAPS_PARSED_DIRS) {
+      try {
+        const dirFiles = await fg('**/*.wysi', { cwd: dir, absolute: true });
+        wysiFiles = wysiFiles.concat(dirFiles);
+      } catch (error) {
+        // Ignore missing directories etc., just log for debugging.
+        console.warn(`Failed to read beatmaps from ${dir}:`, error);
+      }
+    }
+
+    // De-duplicate paths in case directories overlap
+    const uniqueFiles = Array.from(new Set(wysiFiles));
 
     const beatmaps = await Promise.all(
-      wysiFiles.map(async (filePath) => {
+      uniqueFiles.map(async (filePath) => {
         const beatmapId = path.basename(filePath, '.wysi');
         const beatmapSetId = path.basename(path.dirname(filePath));
 
