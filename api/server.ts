@@ -601,6 +601,68 @@ app.get('/api/beatmaps', async (req: Request, res: Response) => {
   }
 });
 
+// Serve individual beatmap files (audio / background / .wysi) from either /tmp or public.
+app.get('/api/beatmaps/:setId/:fileName', async (req: Request, res: Response) => {
+  try {
+    const { setId, fileName } = req.params;
+
+    // Basic safety against path traversal
+    if (fileName.includes('..') || setId.includes('..')) {
+      return res.status(400).json({ error: 'Invalid path' });
+    }
+
+    let foundPath: string | null = null;
+
+    for (const dir of BEATMAPS_PARSED_DIRS) {
+      const candidate = path.join(dir, setId, fileName);
+      try {
+        const stat = await fs.promises.stat(candidate);
+        if (stat.isFile()) {
+          foundPath = candidate;
+          break;
+        }
+      } catch {
+        // ignore and try next directory
+      }
+    }
+
+    if (!foundPath) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const ext = path.extname(foundPath).toLowerCase();
+    let contentType = 'application/octet-stream';
+    if (ext === '.mp3' || ext === '.m4a' || ext === '.ogg') {
+      contentType = 'audio/mpeg';
+    } else if (ext === '.wav') {
+      contentType = 'audio/wav';
+    } else if (ext === '.json' || ext === '.wysi') {
+      contentType = 'application/json';
+    } else if (ext === '.jpg' || ext === '.jpeg') {
+      contentType = 'image/jpeg';
+    } else if (ext === '.png') {
+      contentType = 'image/png';
+    } else if (ext === '.gif') {
+      contentType = 'image/gif';
+    }
+
+    res.setHeader('Content-Type', contentType);
+    const stream = fs.createReadStream(foundPath);
+    stream.on('error', (err) => {
+      console.error('Error streaming beatmap file:', err);
+      if (!res.headersSent) {
+        res.status(500).end('Failed to read file');
+      } else {
+        res.end();
+      }
+    });
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Failed to serve beatmap file:', error);
+    res.status(500).json({ error: 'Failed to serve beatmap file' });
+  }
+});
+
 // --------------------- ADD NEW ROUTES ABOVE -------------------------
 
 // ====================================================================

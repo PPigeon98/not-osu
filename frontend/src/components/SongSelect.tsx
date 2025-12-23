@@ -69,7 +69,8 @@ const SongSelect = () => {
     const userData = stored ? JSON.parse(stored) : InitUserData();
     const musicVolume = userData.MusicVolume / 100;
 
-    const audioPath = encodeURI(`./beatmaps/${beatmap.setId}/${beatmap.songInfo.AudioFilename}`);
+    // Use backend API so it works for both public/beatmaps and /tmp/beatmaps on Vercel
+    const audioPath = encodeURI(`${backendUrl}/beatmaps/${beatmap.setId}/${beatmap.songInfo.AudioFilename}`);
     const audio = new Audio(audioPath);
 
     if (audioPath === audioPathRef.current) {

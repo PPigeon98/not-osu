@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PlayerLoader from './PlayerLoader';
 import { useLocation } from 'react-router-dom';
+import { backendUrl } from './CommonGame';
 
 type HitObject = {
   x: number;
@@ -19,10 +20,11 @@ const MapLoader = () => {
   const location = useLocation();
   const { beatmapId, beatmapSetId } = location.state;
 
-  const mapPath = `./beatmaps/${beatmapSetId}/`;
+  // Use backend API so it works for both public/beatmaps and /tmp/beatmaps on Vercel
+  const mapPath = `${backendUrl}/beatmaps/${beatmapSetId}/`;
 
   useEffect(() => {
-    const theMap = encodeURI(mapPath + `${beatmapId}.wysi`);
+    const theMap = encodeURI(`${mapPath}${beatmapId}.wysi`);
     const loadMap = async () => {
       const file = await fetch(theMap);
       const parsed = await file.json();
