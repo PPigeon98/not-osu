@@ -60,11 +60,63 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
     let canvas: HTMLCanvasElement;
     let cleanupFn: (() => void) | null = null;
 
-    // Dynamically import shader-park-core to handle Vercel build issues
+    // Load shader-park-core from CDN instead of npm to avoid build issues
     (async () => {
       try {
-        // @ts-ignore - shader-park-core doesn't have types
-        const shaderParkModule = await import('shader-park-core');
+        // Load from CDN - try ESM import first, fallback to UMD script
+        const loadShaderParkFromCDN = async (): Promise<any> => {
+          try {
+            // Try dynamic import from CDN (ESM)
+            // @ts-ignore - Dynamic CDN import
+            const module = await import('https://cdn.jsdelivr.net/npm/shader-park-core@0.2.8/dist/shader-park-core.esm.js');
+            return module;
+          } catch (esmError) {
+            console.log('ESM import failed, trying UMD script:', esmError);
+            
+            // Fallback to UMD script tag
+            return new Promise((resolve, reject) => {
+              // Check if already loaded
+              const win = window as any;
+              const possibleNames = ['ShaderParkCore', 'shaderParkCore', 'ShaderPark', 'shaderPark', 'shader-park-core'];
+              for (const name of possibleNames) {
+                if (win[name]) {
+                  resolve(win[name]);
+                  return;
+                }
+              }
+
+              const script = document.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/npm/shader-park-core@0.2.8/dist/shader-park-core.umd.js';
+              script.async = true;
+              script.onload = () => {
+                // Wait for initialization
+                setTimeout(() => {
+                  const win = window as any;
+                  // Try all possible names
+                  for (const name of possibleNames) {
+                    if (win[name]) {
+                      resolve(win[name]);
+                      return;
+                    }
+                  }
+                  
+                  // Log all window properties for debugging
+                  const shaderKeys = Object.keys(win).filter(k => 
+                    k.toLowerCase().includes('shader') || k.toLowerCase().includes('park')
+                  );
+                  console.log('Window properties with "shader" or "park":', shaderKeys);
+                  console.log('All window properties:', Object.keys(win).slice(0, 50));
+                  
+                  reject(new Error('ShaderPark module not found. Check console for available properties.'));
+                }, 200);
+              };
+              script.onerror = () => reject(new Error('Failed to load shader-park-core from CDN'));
+              document.head.appendChild(script);
+            });
+          }
+        };
+
+        const shaderParkModule = await loadShaderParkFromCDN();
         
         // Handle both default and named exports
         const createSculptureWithGeometry = 
@@ -99,13 +151,6 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
           (window.location.hostname.includes('vercel.app') || 
            window.location.hostname.includes('vercel.com') ||
            import.meta.env.PROD);
-        
-        // Skip shader entirely in production if it's causing issues
-        // Just render a black background
-        if (isProduction) {
-          console.log('Skipping shader-park in production - too many functions unavailable');
-          return;
-        }
         
         const cleanShaderCode = (isProduction ? shaderCodeProd : shaderCodeDev).trim();
 
