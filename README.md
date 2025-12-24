@@ -8,23 +8,13 @@ Not~Osu! is a web-based rhythm game which provides users with a fun and exciting
 
 ## FEATURES
 
-- [ ] Start Menu 
-- [ ] Song Selection
-- [ ] Game Screen
-- [ ] Score
-- [ ] Pause Screen
-- [ ] Fail Screen
-- [ ] Win Screen
-- [ ] Progress Bar
-- [ ] Combo
-- [ ] Timing Judgements (OK, GREAT, PERFECT)
+- [ ] 😊
 
 ## Technologies Used
 
 - **Programming Languages**: Typescript
 - **Frontend**: React.js, TailwindCSS
 - **Backend**: Typescript
-- **Database**: MongoDB
 
 ## Installation
 
@@ -32,8 +22,8 @@ To run this project locally, follow these steps:
 
 1. **Clone the Repository**
    ```bash
-   git clone git@github.com:devsoc-unsw/trainee-kung-fu-panda-25t3.git
-   cd trainee-kung-fu-panda-25t3
+   git clone https://github.com/PPigeon98/not-osu.git
+   cd not-osu
    ```
 2. **Run the Frontend**
    ```bash
@@ -42,6 +32,6 @@ To run this project locally, follow these steps:
    ```
 3. **Run the Backend (in a different terminal)**
    ```bash
-   cd backend
+   cd api
    npm run dev
    ```
