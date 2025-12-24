@@ -1,26 +1,39 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 type ShaderParkBackgroundProps = {
   audioAnalyser?: AnalyserNode | null;
 };
 
-// Shader code as string - shader-park-core expects a string
-// input() accesses state values from the callback sequentially
-const shaderCode = `
+/**
+ * FIXED: Pass the shader as a function. 
+ * Shader Park will stringify this function or run it in a custom scope
+ * where 'input', 'getSpace', 'noise', etc. are defined.
+ */
+const shaderCode = () => {
+  // @ts-ignore - These functions are injected by Shader Park at runtime
   let audio = input();
+  // @ts-ignore
   displace(mouse.x, mouse.y, 0);
+  // @ts-ignore
   setMaxIterations(5);
+  // @ts-ignore
   let pointerDown = input();
-  let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection()*4+audio));
-  color(normal*.1 + vec3(0, 0, 1));
-  boxFrame(vec3(.5), .01 + n*.01);
+  // @ts-ignore
+  let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection() * 4 + audio));
+  // @ts-ignore
+  color(normal * .1 + vec3(0, 0, 1));
+  // @ts-ignore
+  boxFrame(vec3(.5), .01 + n * .01);
+  // @ts-ignore
   mixGeo(pointerDown);
-  sphere(0.5 + n*.5);
-`;
+  // @ts-ignore
+  sphere(0.5 + n * .5);
+};
 
 const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
   const stateRef = useRef({
     time: 0,
     mouse: { x: 0, y: 0 },
@@ -48,7 +61,6 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
 
     (async () => {
       try {
-        // @ts-ignore - shader-park-core doesn't have type definitions
         const shaderParkModule = await import('shader-park-core');
         
         const createSculptureWithGeometry = 
@@ -79,8 +91,8 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
           };
         };
 
-        // Create mesh using shader code string
-        mesh = createSculptureWithGeometry(geometry, shaderCode.trim(), getState);
+        // Create mesh using the function reference instead of a string
+        mesh = createSculptureWithGeometry(geometry, shaderCode, getState);
         
         if (!mesh) throw new Error('Mesh creation failed');
         scene.add(mesh);
@@ -141,7 +153,7 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
         };
       } catch (err) {
         console.error('ShaderPark setup error:', err);
-        // Silently fail - component will render without background
+        setError(err instanceof Error ? err.message : 'Unknown');
       }
     })();
 
