@@ -144,15 +144,8 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
         // Create geometry
         geometry = new THREE.SphereGeometry(1, 32, 32);
 
-        // Use production shader (no input()) when in Vercel/production
-        // Check if we're in production by checking the hostname or environment
-        const isProduction = 
-          typeof window !== 'undefined' && 
-          (window.location.hostname.includes('vercel.app') || 
-           window.location.hostname.includes('vercel.com') ||
-           import.meta.env.PROD);
-        
-        const cleanShaderCode = (isProduction ? shaderCodeProd : shaderCodeDev).trim();
+        // Temporarily use dev shader for both dev and production/Vercel
+        const cleanShaderCode = shaderCodeDev.trim();
 
         // Create shader park mesh
         // Wrap in try-catch to handle shader compilation errors gracefully
