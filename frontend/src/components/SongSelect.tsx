@@ -22,6 +22,7 @@ type BeatmapSongInfo = {
   Version: string;
   CircleSize: number;
   StarRating?: number;
+  BackgroundFilename?: string;
 };
 
 type Beatmap = {
@@ -44,6 +45,7 @@ const SongSelect = () => {
   const [beatmaps, setBeatmaps] = useState<Beatmap[]>([]);
   const [selectedBeatmap, setSelectedBeatmap] = useState<Beatmap | null>(null);
   const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [playHoverSound] = useSound(buttonHover1);
   const [playClickSound] = useSound(buttonClick1);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -89,6 +91,14 @@ const SongSelect = () => {
       setLeaderboard([]);
     }
 
+    // Update background image
+    if (beatmap.songInfo.BackgroundFilename) {
+      const bgPath = encodeURI(`${backendUrl}/beatmaps/${beatmap.setId}/${beatmap.songInfo.BackgroundFilename}`);
+      setBackgroundImage(bgPath);
+    } else {
+      setBackgroundImage(null);
+    }
+
     // Use backend API so it works for both public/beatmaps and /tmp/beatmaps on Vercel
     const audioPath = encodeURI(`${backendUrl}/beatmaps/${beatmap.setId}/${beatmap.songInfo.AudioFilename}`);
     
@@ -113,8 +123,34 @@ const SongSelect = () => {
 
   return (
     <>
-      <main className="flex flex-col items-center w-screen h-screen text-[#FFFFFF] pl-4">
-        <div className="flex w-full justify-end items-center h-15 p-4 gap-4">
+      {/* Background image */}
+      {backgroundImage && (
+        <div
+          key={backgroundImage}
+          className="fixed top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat transform scale-105"
+          style={{
+            backgroundImage: `url("${backgroundImage}")`,
+            filter: 'blur(10px)',
+            zIndex: 0,
+            opacity: 0,
+            animation: 'fadeInBg 0.8s ease-in-out forwards',
+          }}
+        />
+      )}
+      <div 
+        className="fixed inset-0 bg-black pointer-events-none transition-opacity duration-700 ease-in-out"
+        style={{ 
+          opacity: backgroundImage ? 0.4 : 0.9,
+          zIndex: 1,
+        }}
+      />
+      <main className="flex flex-col items-center w-screen h-screen text-[#FFFFFF] pl-4 relative" style={{ zIndex: 2 }}>
+        <div 
+          className="flex w-screen justify-end items-center h-15 p-4 gap-4 -ml-4"
+          style={{
+            background: 'linear-gradient(to bottom, rgba(17, 17, 27, 0.7), rgba(17, 17, 27, 1.0))'
+          }}
+        >
           <ToggleButtonGroup
             value={mode}
             exclusive
@@ -330,7 +366,7 @@ const SongSelect = () => {
 
           {/* Top gradient overlay - covers mapped items area */}
           <div 
-            className="absolute top-0 left-0 w-full h-20 pointer-events-none z-10"
+            className="absolute top-0 -left-4 w-[calc(100%+1rem)] h-20 pointer-events-none z-10"
             style={{
               background: 'linear-gradient(to bottom, #11111b, transparent)'
             }}
@@ -338,14 +374,27 @@ const SongSelect = () => {
 
           {/* Bottom gradient overlay - covers mapped items area */}
           <div 
-            className="absolute bottom-0 left-0 w-full h-20 pointer-events-none z-10"
+            className="absolute bottom-0 -left-4 w-[calc(100%+1rem)] h-20 pointer-events-none z-10"
             style={{
               background: 'linear-gradient(to top, #11111b, transparent)'
             }}
           />
         </div>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <div 
+          style={{
+            width: '100vw',
+            marginLeft: '-1rem',
+            paddingTop: '1rem',
+            paddingBottom: 0,
+            paddingLeft: '1rem',
+            paddingRight: '1rem',
+            background: 'linear-gradient(to bottom, rgba(17, 17, 27, 1.0), rgba(17, 17, 27, 0.7))',
+            flex: '1 1 auto',
+            minHeight: 0,
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center' }}>
           <IconButton aria-label="back" 
             sx={{
               backgroundColor: '#934AB3',
@@ -359,6 +408,7 @@ const SongSelect = () => {
           </IconButton>
           <UploadBeatmap onUploadSuccess={fetchBeatmaps} />
         </Box>
+        </div>
       </main>
     </>
   )
