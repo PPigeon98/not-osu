@@ -5,21 +5,31 @@ type ShaderParkBackgroundProps = {
   audioAnalyser?: AnalyserNode | null;
 };
 
-// Shader code - input() function accesses state values from callback sequentially
-// The state callback returns: { time, mouse, pointerDown, audio }
-// input() accesses these in the order they appear in the object
-// Note: This works locally but may fail in production if input() isn't injected properly
-const shaderCode = `
+/**
+ * FIXED: Pass the shader as a function. 
+ * Shader Park will stringify this function or run it in a custom scope
+ * where 'input', 'getSpace', 'noise', etc. are defined.
+ */
+const shaderCode = () => {
+  // @ts-ignore - These functions are injected by Shader Park at runtime
   let audio = input();
+  // @ts-ignore
   displace(mouse.x, mouse.y, 0);
+  // @ts-ignore
   setMaxIterations(5);
+  // @ts-ignore
   let pointerDown = input();
-  let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection()*4+audio));
-  color(normal*.1 + vec3(0, 0, 1));
-  boxFrame(vec3(.5), .01 + n*.01);
+  // @ts-ignore
+  let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection() * 4 + audio));
+  // @ts-ignore
+  color(normal * .1 + vec3(0, 0, 1));
+  // @ts-ignore
+  boxFrame(vec3(.5), .01 + n * .01);
+  // @ts-ignore
   mixGeo(pointerDown);
-  sphere(0.5 + n*.5);
-`;
+  // @ts-ignore
+  sphere(0.5 + n * .5);
+};
 
 const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -34,18 +44,12 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const clockRef = useRef(new THREE.Clock());
 
-  // Update analyser reference when it changes
   useEffect(() => {
     analyserRef.current = audioAnalyser || null;
   }, [audioAnalyser]);
 
   useEffect(() => {
-    if (!mountRef.current) return;
-    
-    // Ensure we're in browser environment
-    if (typeof window === 'undefined') {
-      return;
-    }
+    if (!mountRef.current || typeof window === 'undefined') return;
 
     let camera: THREE.PerspectiveCamera;
     let scene: THREE.Scene;
@@ -55,105 +59,56 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
     let canvas: HTMLCanvasElement;
     let cleanupFn: (() => void) | null = null;
 
-    // Dynamically import shader-park-core to handle Vercel build issues
     (async () => {
       try {
-        // @ts-ignore - shader-park-core doesn't have types
         const shaderParkModule = await import('shader-park-core');
         
-        // Handle both default and named exports
         const createSculptureWithGeometry = 
           shaderParkModule.createSculptureWithGeometry || 
-          shaderParkModule.default?.createSculptureWithGeometry ||
-          (shaderParkModule.default && typeof shaderParkModule.default === 'function' 
-            ? shaderParkModule.default 
-            : null);
+          shaderParkModule.default?.createSculptureWithGeometry;
         
         if (typeof createSculptureWithGeometry !== 'function') {
-          console.error('ShaderPark module structure:', shaderParkModule);
-          throw new Error('createSculptureWithGeometry is not available');
+          throw new Error('Shader Park creation function not found');
         }
 
         const width = window.innerWidth;
         const height = window.innerHeight;
 
-        // Setup camera
         camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 10);
-        camera.position.z = 1;
+        camera.position.z = 1.2;
 
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000);
+        geometry = new THREE.SphereGeometry(1, 64, 64);
 
-        // Create geometry
-        geometry = new THREE.SphereGeometry(1, 32, 32);
-
-        // Create shader park mesh
-        // Wrap in try-catch to handle shader compilation errors gracefully
-        try {
-          // Ensure shader code is a clean string (no transformations)
-          const cleanShaderCode = shaderCode.trim();
-          
-          // Create the state callback function
-          // Ensure all values are primitives and in a consistent order
-          // The order matters for input() - it accesses values sequentially
-          const getState = () => {
-            const state = stateRef.current;
-            return {
-              // Return values in the order they're accessed in the shader
-              // First input() call gets audio, second gets pointerDown
-              audio: typeof state.audio === 'number' ? state.audio : 0,
-              pointerDown: typeof state.pointerDown === 'number' ? state.pointerDown : 0,
-              // time and mouse are special - time might be used, mouse is accessed directly
-              time: typeof state.time === 'number' ? state.time : 0,
-              mouse: state.mouse || { x: 0, y: 0 },
-            };
+        const getState = () => {
+          const state = stateRef.current;
+          return {
+            audio: state.audio || 0,
+            pointerDown: state.pointerDown || 0,
+            time: state.time || 0,
+            mouse: state.mouse || { x: 0, y: 0 },
           };
+        };
 
-          // Small delay to ensure module is fully initialized
-          await new Promise(resolve => setTimeout(resolve, 0));
+        // Create mesh using the function reference instead of a string
+        mesh = createSculptureWithGeometry(geometry, shaderCode, getState);
+        
+        if (!mesh) throw new Error('Mesh creation failed');
+        scene.add(mesh);
 
-          // Try to create the mesh
-          mesh = createSculptureWithGeometry(geometry, cleanShaderCode, getState);
-          
-          if (!mesh) {
-            throw new Error('createSculptureWithGeometry returned null/undefined');
-          }
-          
-          scene.add(mesh);
-        } catch (meshError) {
-          console.error('Error creating shader park mesh:', meshError);
-          console.error('Shader code:', shaderCode);
-          setError(meshError instanceof Error ? meshError.message : 'Failed to create shader mesh');
-          // Don't throw - allow component to render without background
-          return;
-        }
-
-        // Setup renderer
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(width, height);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
         canvas = renderer.domElement;
-        canvas.id = 'shader-park-background';
-        canvas.style.position = 'fixed';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.width = '100vw';
-        canvas.style.height = '100vh';
-        canvas.style.display = 'block';
-        canvas.style.zIndex = '0';
-        canvas.style.pointerEvents = 'none';
-
-        // Remove any existing canvas with the same id
-        const existingCanvas = document.getElementById('shader-park-background');
-        if (existingCanvas) {
-          existingCanvas.remove();
-        }
-
+        canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;';
+        
+        const oldCanvas = document.getElementById('shader-park-bg');
+        if (oldCanvas) oldCanvas.remove();
+        canvas.id = 'shader-park-bg';
         document.body.appendChild(canvas);
-        console.log('ShaderParkBackground canvas appended to body');
 
-        // Mouse tracking
         const handleMouseMove = (e: MouseEvent) => {
           stateRef.current.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
           stateRef.current.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -161,84 +116,51 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
 
         window.addEventListener('mousemove', handleMouseMove);
 
-        // Animation loop
-        function animate() {
+        const animate = () => {
           const delta = clockRef.current.getDelta();
           stateRef.current.time += delta;
 
-          // Update audio reactivity
           if (analyserRef.current) {
             const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
             analyserRef.current.getByteFrequencyData(dataArray);
-            
-            // Get low frequency data (bin 2 for bass)
-            const audioValue = Math.pow((dataArray[2] / 255) * 0.81, 8) + delta * 0.5;
-            stateRef.current.currAudio += audioValue;
-            stateRef.current.audio = 0.2 * stateRef.current.currAudio + 0.8 * stateRef.current.audio;
+            const bass = dataArray[2] / 255;
+            stateRef.current.currAudio += Math.pow(bass * 0.8, 4) + delta * 0.2;
+            stateRef.current.audio = stateRef.current.currAudio;
           } else {
-            // If no audio, use time for continuous motion
-            stateRef.current.audio = stateRef.current.time * 0.1;
+            stateRef.current.audio = stateRef.current.time * 0.2;
           }
 
           renderer.render(scene, camera);
-        }
+        };
 
-        // Force an initial render
-        renderer.render(scene, camera);
-        
         renderer.setAnimationLoop(animate);
 
-        // Handle resize
         const handleResize = () => {
-          const newWidth = window.innerWidth;
-          const newHeight = window.innerHeight;
-          
-          camera.aspect = newWidth / newHeight;
+          camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
-          renderer.setSize(newWidth, newHeight);
+          renderer.setSize(window.innerWidth, window.innerHeight);
         };
 
         window.addEventListener('resize', handleResize);
 
-        // Store cleanup function
         cleanupFn = () => {
           window.removeEventListener('resize', handleResize);
           window.removeEventListener('mousemove', handleMouseMove);
-          if (renderer) {
-            renderer.setAnimationLoop(null);
-          }
-          if (canvas && canvas.parentNode) {
-            canvas.parentNode.removeChild(canvas);
-          }
-          if (geometry) {
-            geometry.dispose();
-          }
-          if (renderer) {
-            renderer.dispose();
-          }
+          renderer.setAnimationLoop(null);
+          canvas.remove();
+          geometry.dispose();
+          renderer.dispose();
         };
-      } catch (error) {
-        console.error('Error setting up ShaderParkBackground:', error);
-        setError(error instanceof Error ? error.message : 'Unknown error');
+      } catch (err) {
+        console.error('ShaderPark setup error:', err);
+        setError(err instanceof Error ? err.message : 'Unknown');
       }
     })();
 
-    // Return cleanup function
-    return () => {
-      if (cleanupFn) {
-        cleanupFn();
-      }
-    };
+    return () => cleanupFn?.();
   }, []);
-
-  if (error) {
-    console.warn('ShaderParkBackground error:', error);
-    // Return empty div on error - background won't show but app won't crash
-    return <div ref={mountRef} style={{ display: 'none' }} />;
-  }
 
   return <div ref={mountRef} style={{ display: 'none' }} />;
 };
 
 export default ShaderParkBackground;
-
