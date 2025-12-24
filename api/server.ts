@@ -688,6 +688,76 @@ app.get('/api/beatmaps', async (req: Request, res: Response) => {
   }
 });
 
+// Get all songs (audio files) recursively from beatmaps directories
+app.get('/api/songs', async (req: Request, res: Response) => {
+  try {
+    // Audio file extensions to search for
+    const audioExtensions = ['**/*.mp3', '**/*.m4a', '**/*.ogg', '**/*.wav'];
+    let audioFiles: string[] = [];
+
+    // Search for audio files in all beatmap directories
+    for (const dir of BEATMAPS_PARSED_DIRS) {
+      try {
+        for (const pattern of audioExtensions) {
+          const files = await fg(pattern, { cwd: dir, absolute: true });
+          audioFiles = audioFiles.concat(files);
+        }
+      } catch (error) {
+        console.warn(`Failed to read audio files from ${dir}:`, error);
+      }
+    }
+
+    // De-duplicate paths
+    const uniqueFiles = Array.from(new Set(audioFiles));
+
+    // Create song entries from audio files
+    const songs = uniqueFiles.map((filePath) => {
+      const fileName = path.basename(filePath);
+      const beatmapSetId = path.basename(path.dirname(filePath));
+      
+      // Generate a unique ID from the file path
+      const fileId = createHash('md5').update(filePath).digest('hex').substring(0, 8);
+
+      return {
+        id: fileId,
+        setId: beatmapSetId,
+        name: path.basename(fileName, path.extname(fileName)),
+        songInfo: {
+          AudioFilename: fileName,
+          PreviewTime: 0,
+          Mode: 0,
+          Title: path.basename(fileName, path.extname(fileName)),
+          Artist: 'Unknown',
+          Version: beatmapSetId,
+        },
+      };
+    });
+
+    // Add Wii music as the first item
+    const playlist = [
+      {
+        id: 'wii',
+        setId: 'wii',
+        name: 'Wii Menu Music',
+        songInfo: {
+          AudioFilename: 'Wi Fi Menu Medley Looped - Mario Kart Wii Music Extended (128kbit_AAC).m4a',
+          PreviewTime: 0,
+          Mode: 0,
+          Title: 'Wii Menu Music',
+          Artist: 'Nintendo',
+          Version: 'Menu',
+        },
+      },
+      ...songs,
+    ];
+
+    res.status(200).json(playlist);
+  } catch (error) {
+    console.error('Failed to fetch songs:', error);
+    res.status(500).json({ error: 'Failed to fetch songs' });
+  }
+});
+
 // Serve individual beatmap files (audio / background / .wysi) from either /tmp or public.
 app.get('/api/beatmaps/:setId/:fileName', async (req: Request, res: Response) => {
   try {
