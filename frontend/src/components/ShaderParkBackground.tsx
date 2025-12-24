@@ -5,15 +5,26 @@ type ShaderParkBackgroundProps = {
   audioAnalyser?: AnalyserNode | null;
 };
 
-// Shader code - input() function accesses state values from callback sequentially
-// The state callback returns: { time, mouse, pointerDown, audio }
-// input() accesses these in the order they appear in the object
-// Note: This works locally but may fail in production if input() isn't injected properly
-const shaderCode = `
+// Shader code for development (uses input() function)
+const shaderCodeDev = `
   let audio = input();
   displace(mouse.x, mouse.y, 0);
   setMaxIterations(5);
   let pointerDown = input();
+  let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection()*4+audio));
+  color(normal*.1 + vec3(0, 0, 1));
+  boxFrame(vec3(.5), .01 + n*.01);
+  mixGeo(pointerDown);
+  sphere(0.5 + n*.5);
+`;
+
+// Shader code for production/Vercel (no input() - uses time-based animation)
+const shaderCodeProd = `
+  displace(mouse.x, mouse.y, 0);
+  setMaxIterations(5);
+  // Use time for animation since input() isn't available in production
+  let audio = time * 0.1;
+  let pointerDown = 0.0;
   let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection()*4+audio));
   color(normal*.1 + vec3(0, 0, 1));
   boxFrame(vec3(.5), .01 + n*.01);
@@ -87,12 +98,19 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
         // Create geometry
         geometry = new THREE.SphereGeometry(1, 32, 32);
 
+        // Use production shader (no input()) when in Vercel/production
+        // Check if we're in production by checking the hostname or environment
+        const isProduction = 
+          typeof window !== 'undefined' && 
+          (window.location.hostname.includes('vercel.app') || 
+           window.location.hostname.includes('vercel.com') ||
+           import.meta.env.PROD);
+        
+        const cleanShaderCode = (isProduction ? shaderCodeProd : shaderCodeDev).trim();
+
         // Create shader park mesh
         // Wrap in try-catch to handle shader compilation errors gracefully
         try {
-          // Ensure shader code is a clean string (no transformations)
-          const cleanShaderCode = shaderCode.trim();
-          
           // Create the state callback function
           // Ensure all values are primitives and in a consistent order
           // The order matters for input() - it accesses values sequentially
@@ -122,7 +140,8 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
           scene.add(mesh);
         } catch (meshError) {
           console.error('Error creating shader park mesh:', meshError);
-          console.error('Shader code:', shaderCode);
+          console.error('Shader code:', cleanShaderCode);
+          console.log('Using production shader:', isProduction);
           setError(meshError instanceof Error ? meshError.message : 'Failed to create shader mesh');
           // Don't throw - allow component to render without background
           return;
