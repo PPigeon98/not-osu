@@ -78,13 +78,25 @@ const SongSelect = () => {
     const userData = stored ? JSON.parse(stored) : InitUserData();
     const musicVolume = userData.MusicVolume / 100;
 
+    // Update leaderboard for hovered beatmap (always update, even if same song)
+    try {
+      const scoresRaw = userData.Scores?.[beatmap.id] ?? [];
+      const scores: ScoreEntry[] = [...scoresRaw].sort((a, b) => b.score - a.score);
+      setSelectedBeatmap(beatmap);
+      setLeaderboard(scores.slice(0, 10));
+    } catch {
+      setSelectedBeatmap(beatmap);
+      setLeaderboard([]);
+    }
+
     // Use backend API so it works for both public/beatmaps and /tmp/beatmaps on Vercel
     const audioPath = encodeURI(`${backendUrl}/beatmaps/${beatmap.setId}/${beatmap.songInfo.AudioFilename}`);
-    const audio = new Audio(audioPath);
-
+    
     if (audioPath === audioPathRef.current) {
       return;
     }
+
+    const audio = new Audio(audioPath);
 
     if (audioRef.current) {
       audioRef.current.pause();
@@ -97,17 +109,6 @@ const SongSelect = () => {
 
     audio.play();
     audioRef.current = audio;
-
-    // Update leaderboard for hovered beatmap
-    try {
-      const scoresRaw = userData.Scores?.[beatmap.id] ?? [];
-      const scores: ScoreEntry[] = [...scoresRaw].sort((a, b) => b.score - a.score);
-      setSelectedBeatmap(beatmap);
-      setLeaderboard(scores.slice(0, 10));
-    } catch {
-      setSelectedBeatmap(beatmap);
-      setLeaderboard([]);
-    }
   };
 
   return (
