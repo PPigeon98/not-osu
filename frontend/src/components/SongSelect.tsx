@@ -21,6 +21,7 @@ type BeatmapSongInfo = {
   Artist: string;
   Version: string;
   CircleSize: number;
+  StarRating?: number;
 };
 
 type Beatmap = {
@@ -30,7 +31,7 @@ type Beatmap = {
   songInfo: BeatmapSongInfo;
 };
 
-type SortType = "Artist" | "Length" | "Title";
+type SortType = "Artist" | "Length" | "Title" | "Difficulty";
 type ModeType = "Mania" | "Taiko" | null;
 
 const SongSelect = () => {  
@@ -159,6 +160,7 @@ const SongSelect = () => {
             <MenuItem value={"Artist"}>Artist</MenuItem>
             <MenuItem value={"Length"}>Length</MenuItem>
             <MenuItem value={"Title"}>Title</MenuItem>
+            <MenuItem value={"Difficulty"}>Difficulty</MenuItem>
           </Select>
 
           <Input 
@@ -199,6 +201,14 @@ const SongSelect = () => {
                   return a.songInfo.PreviewTime - b.songInfo.PreviewTime;
                 case "Title":
                   return a.songInfo.Title.localeCompare(b.songInfo.Title);
+                case "Difficulty": {
+                  const aStar = a.songInfo.StarRating ?? 0;
+                  const bStar = b.songInfo.StarRating ?? 0;
+                  // Higher star rating first
+                  if (bStar !== aStar) return bStar - aStar;
+                  // Tie-break by title for stable ordering
+                  return a.songInfo.Title.localeCompare(b.songInfo.Title);
+                }
                 default:
                   return 0;
               }
@@ -231,6 +241,9 @@ const SongSelect = () => {
                   </span>
                   <span className="font-bold text-[1.8vh] block">
                     {beatmap.songInfo.Version}
+                  </span>
+                  <span className="text-[1.8vh] block">
+                    {beatmap.songInfo.StarRating} stars
                   </span>
                 </span>
               </Link>

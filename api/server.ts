@@ -101,6 +101,46 @@ interface ParsedBeatmap {
   }>;
 }
 
+// Very simplified difficulty calculator inspired by osu!/Quaver style strain systems.
+// Produces a "star" value based mainly on note density and peak bursts.
+const calculateDifficulty = (beatmap: ParsedBeatmap): number => {
+  const objects = [...beatmap.hitObjects];
+  if (objects.length < 2) return 0;
+
+  // Ensure sorted by time
+  objects.sort((a, b) => a.time - b.time);
+
+  const firstTime = objects[0].time;
+  const lastTime = objects[objects.length - 1].time;
+  const durationSec = Math.max((lastTime - firstTime) / 1000, 1);
+
+  const totalNps = objects.length / durationSec;
+
+  // Compute peak notes-per-second using a sliding 1s window
+  let peakNps = 0;
+  let startIdx = 0;
+  for (let i = 0; i < objects.length; i++) {
+    const windowStartTime = objects[i].time - 1000;
+    while (startIdx < i && objects[startIdx].time < windowStartTime) {
+      startIdx++;
+    }
+    const countInWindow = i - startIdx + 1;
+    const nps = countInWindow; // 1s window → count == NPS
+    if (nps > peakNps) {
+      peakNps = nps;
+    }
+  }
+
+  // Simple combination: peak bursts matter more than overall density.
+  // Tuned loosely so "normal" maps end up around 1–8 stars.
+  const difficultyRaw = 0.4 * totalNps + 0.8 * peakNps;
+
+  // Mild compression so insane bursts don't explode the scale.
+  const stars = Math.log1p(difficultyRaw) * 1.5;
+
+  return Number(stars.toFixed(2));
+};
+
 const parseOsuFile = async (osuFilePath: string, fallbackSetId?: string): Promise<{ beatmapSetId: string; beatmapId: string; data: ParsedBeatmap } | null> => {
   try {
     const content = await fs.promises.readFile(osuFilePath, 'utf8');
@@ -313,64 +353,87 @@ const parseBeatmapsFromFolder = async (folderPath: string): Promise<void> => {
       const parsedFolder = path.join(BEATMAPS_PARSED_DIR, beatmapSetId);
       await fs.promises.mkdir(parsedFolder, { recursive: true });
 
-      // Process audio file once per set (all beatmaps share the same audio)
-      let audioProcessed = false;
-      let audioHasSilence = false; // tracks whether we actually prepended 3s silence
-      let newAudioFilename = 'song.mp3';
-      if (files.length > 0) {
-        const firstFile = files[0];
-        const audioFilename = String(firstFile.parsed.data.songInfo['AudioFilename'] || '');
-        if (audioFilename) {
-          const sourceAudioPath = path.join(path.dirname(firstFile.osuFile), audioFilename);
-          const destAudioPath = path.join(parsedFolder, newAudioFilename);
-          try {
-            // Check if audio file already exists (skip if already processed)
-            try {
-              await fs.promises.access(destAudioPath);
-              console.log(`Audio file already exists, skipping: ${destAudioPath}`);
-              audioProcessed = true;
-              // Assume previously processed file already has the 3s silence
-              audioHasSilence = true;
-            } catch {
-              // File doesn't exist yet; use ffmpeg-static if available, otherwise fall back to copy.
-              if (!ffmpegPath) {
-                await fs.promises.copyFile(sourceAudioPath, destAudioPath);
-                console.warn('ffmpeg-static not available; copied audio without 3s silence:', destAudioPath);
-                audioProcessed = true;
-                audioHasSilence = false;
-              } else {
-                const ffmpegCmd = `"${ffmpegPath}" -f lavfi -t 3 -i anullsrc=channel_layout=stereo:sample_rate=44100 -i "${sourceAudioPath}" -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1[out]" -map "[out]" -acodec libmp3lame -y "${destAudioPath}"`;
-                await execAsync(ffmpegCmd);
-                console.log(`Processed audio file with 3s silence: ${destAudioPath}`);
-                audioProcessed = true;
-                audioHasSilence = true;
-              }
-            }
-          } catch (error) {
-            console.warn(`Failed to process audio file ${audioFilename}:`, error);
-          }
+      // Collect all unique audio files from all beatmaps in the set
+      const audioFilesMap = new Map<string, { sourcePath: string; originalFilename: string }>();
+      const audioHasSilenceMap = new Map<string, boolean>();
+      
+      for (const file of files) {
+        const audioFilename = String(file.parsed.data.songInfo['AudioFilename'] || '');
+        if (audioFilename && !audioFilesMap.has(audioFilename)) {
+          const sourceAudioPath = path.join(path.dirname(file.osuFile), audioFilename);
+          audioFilesMap.set(audioFilename, {
+            sourcePath: sourceAudioPath,
+            originalFilename: audioFilename
+          });
         }
       }
 
-      // Process background file once per set
-      let bgProcessed = false;
-      let newBgFilename = 'bg';
-      if (files.length > 0) {
-        const firstFile = files[0];
-        const bgFilename = String(firstFile.parsed.data.songInfo['BackgroundFilename'] || '');
-        if (bgFilename) {
-          const bgExt = path.extname(bgFilename);
-          newBgFilename = `bg${bgExt}`;
-          const sourceBgPath = path.join(path.dirname(firstFile.osuFile), bgFilename);
-          const destBgPath = path.join(parsedFolder, newBgFilename);
+      // Process each unique audio file
+      const audioFilenameMap = new Map<string, string>(); // original -> new filename
+      let audioIndex = 1;
+      for (const [originalAudioFilename, { sourcePath }] of audioFilesMap) {
+        // Always output as MP3 so container/codec match and avoid OGG+MP3 issues
+        const newAudioFilename = `song${audioIndex}.mp3`;
+        const destAudioPath = path.join(parsedFolder, newAudioFilename);
+        
+        try {
+          // Check if audio file already exists (skip if already processed)
           try {
-            await fs.promises.copyFile(sourceBgPath, destBgPath);
-            console.log(`Copied background file: ${destBgPath}`);
-            bgProcessed = true;
-          } catch (error) {
-            console.warn(`Failed to copy background file ${bgFilename}:`, error);
+            await fs.promises.access(destAudioPath);
+            console.log(`Audio file already exists, skipping: ${destAudioPath}`);
+            audioFilenameMap.set(originalAudioFilename, newAudioFilename);
+            audioHasSilenceMap.set(originalAudioFilename, true); // Assume previously processed
+          } catch {
+            // File doesn't exist yet; use ffmpeg-static if available, otherwise fall back to copy.
+            if (!ffmpegPath) {
+              await fs.promises.copyFile(sourcePath, destAudioPath);
+              console.warn('ffmpeg-static not available; copied audio without 3s silence:', destAudioPath);
+              audioFilenameMap.set(originalAudioFilename, newAudioFilename);
+              audioHasSilenceMap.set(originalAudioFilename, false);
+            } else {
+              const ffmpegCmd = `"${ffmpegPath}" -f lavfi -t 3 -i anullsrc=channel_layout=stereo:sample_rate=44100 -i "${sourcePath}" -filter_complex "[0:a][1:a]concat=n=2:v=0:a=1[out]" -map "[out]" -acodec libmp3lame -y "${destAudioPath}"`;
+              await execAsync(ffmpegCmd);
+              console.log(`Processed audio file with 3s silence: ${destAudioPath}`);
+              audioFilenameMap.set(originalAudioFilename, newAudioFilename);
+              audioHasSilenceMap.set(originalAudioFilename, true);
+            }
           }
+        } catch (error) {
+          console.warn(`Failed to process audio file ${originalAudioFilename}:`, error);
         }
+        audioIndex++;
+      }
+
+      // Collect all unique background files from all beatmaps in the set
+      const bgFilesMap = new Map<string, { sourcePath: string; originalFilename: string }>();
+      
+      for (const file of files) {
+        const bgFilename = String(file.parsed.data.songInfo['BackgroundFilename'] || '');
+        if (bgFilename && !bgFilesMap.has(bgFilename)) {
+          const sourceBgPath = path.join(path.dirname(file.osuFile), bgFilename);
+          bgFilesMap.set(bgFilename, {
+            sourcePath: sourceBgPath,
+            originalFilename: bgFilename
+          });
+        }
+      }
+
+      // Process each unique background file
+      const bgFilenameMap = new Map<string, string>(); // original -> new filename
+      let bgIndex = 1;
+      for (const [originalBgFilename, { sourcePath }] of bgFilesMap) {
+        const bgExt = path.extname(originalBgFilename);
+        const newBgFilename = `bg${bgIndex}${bgExt}`;
+        const destBgPath = path.join(parsedFolder, newBgFilename);
+        
+        try {
+          await fs.promises.copyFile(sourcePath, destBgPath);
+          console.log(`Copied background file: ${destBgPath}`);
+          bgFilenameMap.set(originalBgFilename, newBgFilename);
+        } catch (error) {
+          console.warn(`Failed to copy background file ${originalBgFilename}:`, error);
+        }
+        bgIndex++;
       }
 
       // Write .wysi file for each beatmap
@@ -378,23 +441,39 @@ const parseBeatmapsFromFolder = async (folderPath: string): Promise<void> => {
         const { beatmapId, data } = parsed;
         
         // Update songInfo with processed filenames
-        if (audioProcessed) {
-          data.songInfo['AudioFilename'] = newAudioFilename;
+        const originalAudioFilename = String(data.songInfo['AudioFilename'] || '');
+        if (originalAudioFilename && audioFilenameMap.has(originalAudioFilename)) {
+          data.songInfo['AudioFilename'] = audioFilenameMap.get(originalAudioFilename)!;
         }
-        if (bgProcessed) {
-          data.songInfo['BackgroundFilename'] = newBgFilename;
+        
+        const originalBgFilename = String(data.songInfo['BackgroundFilename'] || '');
+        if (originalBgFilename && bgFilenameMap.has(originalBgFilename)) {
+          data.songInfo['BackgroundFilename'] = bgFilenameMap.get(originalBgFilename)!;
         }
 
         // Add 3 second delay to timing values (3000ms) ONLY if we actually added 3s of silence
+        const audioHasSilence = originalAudioFilename && audioHasSilenceMap.get(originalAudioFilename) === true;
         if (audioHasSilence) {
           const SILENCE_OFFSET_MS = 3000;
           
-          // Offset PreviewTime if it exists
+          // Offset PreviewTime and ensure it is never before the 3s silence
           if (data.songInfo['PreviewTime'] !== undefined) {
-            const previewTime = data.songInfo['PreviewTime'] as number;
-            if (previewTime >= 0) {
-              data.songInfo['PreviewTime'] = previewTime + SILENCE_OFFSET_MS;
+            let previewTime = data.songInfo['PreviewTime'] as number;
+
+            // -1 or any negative value means "no explicit preview" in osu!
+            // Treat that as 0 before adding our 3s offset.
+            if (previewTime < 0) {
+              previewTime = 0;
             }
+
+            previewTime += SILENCE_OFFSET_MS;
+
+            // Clamp so preview is never before the 3s silence block
+            if (previewTime < SILENCE_OFFSET_MS) {
+              previewTime = SILENCE_OFFSET_MS;
+            }
+
+            data.songInfo['PreviewTime'] = previewTime;
           }
 
           // Offset all hitObjects times
@@ -404,6 +483,14 @@ const parseBeatmapsFromFolder = async (folderPath: string): Promise<void> => {
               hitObject.endTime += SILENCE_OFFSET_MS;
             }
           }
+        }
+
+        // Calculate and store a simple difficulty rating (star-like value)
+        try {
+          const difficulty = calculateDifficulty(data);
+          data.songInfo['StarRating'] = difficulty;
+        } catch (err) {
+          console.warn(`Failed to calculate difficulty for beatmap ${beatmapId}:`, err);
         }
 
         const wysiPath = path.join(parsedFolder, `${beatmapId}.wysi`);

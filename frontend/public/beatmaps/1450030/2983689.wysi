@@ -1,6 +1,6 @@
 {
   "songInfo": {
-    "AudioFilename": "song.mp3",
+    "AudioFilename": "song1.mp3",
     "AudioLeadIn": 0,
     "PreviewTime": 92787,
     "Mode": 1,
@@ -14,9 +14,10 @@
     "BeatmapSetID": 1450030,
     "CircleSize": 7,
     "ApproachRate": 10,
-    "BackgroundFilename": "bg.jpg",
+    "BackgroundFilename": "bg1.jpg",
     "BackgroundXOffset": 0,
-    "BackgroundYOffset": 100
+    "BackgroundYOffset": 100,
+    "StarRating": 3.43
   },
   "hitObjects": [
     {
