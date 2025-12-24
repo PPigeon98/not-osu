@@ -18,17 +18,12 @@ const shaderCodeDev = `
   sphere(0.5 + n*.5);
 `;
 
-// Shader code for production/Vercel (no input(), no mouse - uses time-based animation only)
+// Shader code for production/Vercel - ultra minimal shader
+// Most shader-park functions aren't available in production builds
+// Using only the most basic functions
 const shaderCodeProd = `
-  setMaxIterations(5);
-  // Use time for animation since input() and mouse aren't available in production
-  let audio = time * 0.1;
-  let pointerDown = 0.0;
-  let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection()*4+audio));
-  color(normal*.1 + vec3(0, 0, 1));
-  boxFrame(vec3(.5), .01 + n*.01);
-  mixGeo(pointerDown);
-  sphere(0.5 + n*.5);
+  color(vec3(0, 0, 1));
+  sphere(0.5);
 `;
 
 const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
@@ -104,6 +99,13 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
           (window.location.hostname.includes('vercel.app') || 
            window.location.hostname.includes('vercel.com') ||
            import.meta.env.PROD);
+        
+        // Skip shader entirely in production if it's causing issues
+        // Just render a black background
+        if (isProduction) {
+          console.log('Skipping shader-park in production - too many functions unavailable');
+          return;
+        }
         
         const cleanShaderCode = (isProduction ? shaderCodeProd : shaderCodeDev).trim();
 
