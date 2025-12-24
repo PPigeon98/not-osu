@@ -18,6 +18,7 @@ export default defineConfig({
   build: {
     commonjsOptions: {
       include: [/shader-park-core/, /node_modules/],
+      transformMixedEsModules: true,
     },
     rollupOptions: {
       output: {
@@ -26,6 +27,7 @@ export default defineConfig({
           'three': ['three'],
         },
       },
+      external: [],
     },
   },
   optimizeDeps: {

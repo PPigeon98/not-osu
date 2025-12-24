@@ -5,6 +5,8 @@ type ShaderParkBackgroundProps = {
   audioAnalyser?: AnalyserNode | null;
 };
 
+// Shader code - input() function accesses state values from the callback
+// In shader-park-core, input() is called sequentially to access state properties
 const shaderCode = `
   let audio = input();
   displace(mouse.x, mouse.y, 0);
@@ -37,6 +39,11 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
 
   useEffect(() => {
     if (!mountRef.current) return;
+    
+    // Ensure we're in browser environment
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     let camera: THREE.PerspectiveCamera;
     let scene: THREE.Scene;
@@ -50,9 +57,19 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
     (async () => {
       try {
         // @ts-ignore - shader-park-core doesn't have types
-        const { createSculptureWithGeometry } = await import('shader-park-core');
+        const shaderParkModule = await import('shader-park-core');
+        
+        // Handle both default and named exports
+        // shader-park-core typically exports createSculptureWithGeometry as a named export
+        const createSculptureWithGeometry = 
+          shaderParkModule.createSculptureWithGeometry || 
+          shaderParkModule.default?.createSculptureWithGeometry ||
+          (shaderParkModule.default && typeof shaderParkModule.default === 'function' 
+            ? shaderParkModule.default 
+            : null);
         
         if (typeof createSculptureWithGeometry !== 'function') {
+          console.error('ShaderPark module structure:', shaderParkModule);
           throw new Error('createSculptureWithGeometry is not available');
         }
 
@@ -70,20 +87,35 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
         geometry = new THREE.SphereGeometry(1, 32, 32);
 
         // Create shader park mesh
+        // Wrap in try-catch to handle shader compilation errors gracefully
         try {
-          mesh = createSculptureWithGeometry(geometry, shaderCode, () => {
+          // Ensure shader code is a clean string (no transformations)
+          const cleanShaderCode = shaderCode.trim();
+          
+          // Create the state callback function
+          const getState = () => {
             return {
               time: stateRef.current.time,
               mouse: stateRef.current.mouse,
               pointerDown: stateRef.current.pointerDown,
               audio: stateRef.current.audio,
             };
-          });
+          };
+
+          // Try to create the mesh
+          mesh = createSculptureWithGeometry(geometry, cleanShaderCode, getState);
+          
+          if (!mesh) {
+            throw new Error('createSculptureWithGeometry returned null/undefined');
+          }
+          
           scene.add(mesh);
         } catch (meshError) {
           console.error('Error creating shader park mesh:', meshError);
-          setError('Failed to create shader mesh');
-          throw meshError;
+          console.error('Shader code:', shaderCode);
+          setError(meshError instanceof Error ? meshError.message : 'Failed to create shader mesh');
+          // Don't throw - allow component to render without background
+          return;
         }
 
         // Setup renderer
