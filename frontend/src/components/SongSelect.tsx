@@ -160,6 +160,7 @@ const SongSelect = () => {
     audioPathRef.current = audioPath;
     audio.currentTime = beatmap.songInfo.PreviewTime / 1000;
     audio.volume = musicVolume;
+    audio.loop = true; // Enable looping for song select preview
 
     audio.play();
     audioRef.current = audio;
