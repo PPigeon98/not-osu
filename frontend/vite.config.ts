@@ -28,6 +28,13 @@ export default defineConfig({
         },
       },
       external: [],
+      // Preserve shader-park-core's internal structure
+      treeshake: {
+        moduleSideEffects: (id) => {
+          // Don't tree-shake shader-park-core to preserve internal functions
+          return id.includes('shader-park-core');
+        },
+      },
     },
   },
   optimizeDeps: {

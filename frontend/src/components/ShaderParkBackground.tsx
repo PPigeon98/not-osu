@@ -5,8 +5,10 @@ type ShaderParkBackgroundProps = {
   audioAnalyser?: AnalyserNode | null;
 };
 
-// Shader code - input() function accesses state values from the callback
-// In shader-park-core, input() is called sequentially to access state properties
+// Shader code - input() function accesses state values from callback sequentially
+// The state callback returns: { time, mouse, pointerDown, audio }
+// input() accesses these in the order they appear in the object
+// Note: This works locally but may fail in production if input() isn't injected properly
 const shaderCode = `
   let audio = input();
   displace(mouse.x, mouse.y, 0);
@@ -60,7 +62,6 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
         const shaderParkModule = await import('shader-park-core');
         
         // Handle both default and named exports
-        // shader-park-core typically exports createSculptureWithGeometry as a named export
         const createSculptureWithGeometry = 
           shaderParkModule.createSculptureWithGeometry || 
           shaderParkModule.default?.createSculptureWithGeometry ||
@@ -93,14 +94,23 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
           const cleanShaderCode = shaderCode.trim();
           
           // Create the state callback function
+          // Ensure all values are primitives and in a consistent order
+          // The order matters for input() - it accesses values sequentially
           const getState = () => {
+            const state = stateRef.current;
             return {
-              time: stateRef.current.time,
-              mouse: stateRef.current.mouse,
-              pointerDown: stateRef.current.pointerDown,
-              audio: stateRef.current.audio,
+              // Return values in the order they're accessed in the shader
+              // First input() call gets audio, second gets pointerDown
+              audio: typeof state.audio === 'number' ? state.audio : 0,
+              pointerDown: typeof state.pointerDown === 'number' ? state.pointerDown : 0,
+              // time and mouse are special - time might be used, mouse is accessed directly
+              time: typeof state.time === 'number' ? state.time : 0,
+              mouse: state.mouse || { x: 0, y: 0 },
             };
           };
+
+          // Small delay to ensure module is fully initialized
+          await new Promise(resolve => setTimeout(resolve, 0));
 
           // Try to create the mesh
           mesh = createSculptureWithGeometry(geometry, cleanShaderCode, getState);
