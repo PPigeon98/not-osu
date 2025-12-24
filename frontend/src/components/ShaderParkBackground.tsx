@@ -21,10 +21,11 @@ const shaderCodeDev = `
 // Shader code for production/Vercel - ultra minimal shader
 // Most shader-park functions aren't available in production builds
 // Using only the most basic functions
-const shaderCodeProd = `
-  color(vec3(0, 0, 1));
-  sphere(0.5);
-`;
+// Temporarily not used - using dev shader for both
+// const shaderCodeProd = `
+//   color(vec3(0, 0, 1));
+//   sphere(0.5);
+// `;
 
 const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -180,7 +181,6 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
         } catch (meshError) {
           console.error('Error creating shader park mesh:', meshError);
           console.error('Shader code:', cleanShaderCode);
-          console.log('Using production shader:', isProduction);
           setError(meshError instanceof Error ? meshError.message : 'Failed to create shader mesh');
           // Don't throw - allow component to render without background
           return;
