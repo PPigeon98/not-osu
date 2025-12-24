@@ -31,11 +31,19 @@ type Beatmap = {
   songInfo: BeatmapSongInfo;
 };
 
+type ScoreEntry = {
+  score: number;
+  highestCombo: number;
+  accuracy: number;
+};
+
 type SortType = "Artist" | "Length" | "Title" | "Difficulty";
 type ModeType = "Mania" | "Taiko" | null;
 
 const SongSelect = () => {  
   const [beatmaps, setBeatmaps] = useState<Beatmap[]>([]);
+  const [selectedBeatmap, setSelectedBeatmap] = useState<Beatmap | null>(null);
+  const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
   const [playHoverSound] = useSound(buttonHover1);
   const [playClickSound] = useSound(buttonClick1);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -87,9 +95,19 @@ const SongSelect = () => {
     audio.currentTime = beatmap.songInfo.PreviewTime / 1000;
     audio.volume = musicVolume;
 
-    audio.play()
-
+    audio.play();
     audioRef.current = audio;
+
+    // Update leaderboard for hovered beatmap
+    try {
+      const scoresRaw = userData.Scores?.[beatmap.id] ?? [];
+      const scores: ScoreEntry[] = [...scoresRaw].sort((a, b) => b.score - a.score);
+      setSelectedBeatmap(beatmap);
+      setLeaderboard(scores.slice(0, 10));
+    } catch {
+      setSelectedBeatmap(beatmap);
+      setLeaderboard([]);
+    }
   };
 
   return (
@@ -259,13 +277,54 @@ const SongSelect = () => {
             ))}
           </div>
 
-          {/* Right: song select artwork (1/3 width) */}
-          <div className="flex items-center justify-center w-1/3 h-full pointer-events-none">
-            <img 
-              src={text} 
-              alt="Text saying 'Select your song!' on the right hand side" 
-              className="max-h-[70%]"
-            />
+          {/* Right: song select artwork + leaderboard (1/3 width) */}
+          <div className="flex flex-col w-1/3 h-full">
+            {/* Top half: artwork */}
+            <div className="flex items-center justify-center h-1/2 pointer-events-none">
+              <img 
+                src={text} 
+                alt="Text saying 'Select your song!' on the right hand side" 
+                className="max-h-[70%]"
+              />
+            </div>
+
+            {/* Bottom half: leaderboard */}
+            <div className="flex flex-col h-1/2 px-3 py-3 bg-[#11111b]/70 rounded-l-2xl overflow-hidden">
+              <span className="font-bold text-[2vh] mb-2">Leaderboard</span>
+              
+              {!selectedBeatmap && (
+                <span className="text-[1.6vh] opacity-70">
+                  Hover a song to see your scores.
+                </span>
+              )}
+
+              {selectedBeatmap && leaderboard.length === 0 && (
+                <span className="text-[1.6vh] opacity-70">
+                  No scores yet for this song.
+                </span>
+              )}
+
+              {selectedBeatmap && leaderboard.length > 0 && (
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                  {leaderboard.map((entry, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-[1.6vh] py-0.5"
+                    >
+                      <span className="opacity-80">{idx + 1}.</span>
+                      <span className="flex-1 px-2 text-right">
+                        {entry.score.toLocaleString()}
+                      </span>
+                      <span className="w-[4rem] text-right opacity-80">
+                        {entry.accuracy.toFixed
+                          ? `${entry.accuracy.toFixed(2)}%`
+                          : `${entry.accuracy}%`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Top gradient overlay - covers mapped items area */}
