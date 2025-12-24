@@ -180,9 +180,10 @@ const SongSelect = () => {
           />
         </div>
 
-        <div className="flex flex-col w-full h-[80%] relative">
-          <div className="flex flex-col w-full h-full overflow-y-auto text-left gap-2 custom-scrollbar">
-                      {beatmaps
+        <div className="flex w-full h-[80%] relative">
+          {/* Left: song cards (2/3 width) */}
+          <div className="flex flex-col w-2/3 h-full overflow-y-auto text-left gap-2 custom-scrollbar py-[20vh] pr-4">
+            {beatmaps
             .filter((beatmap) => 
               !mode || 
               (mode === "Mania" && beatmap.songInfo.Mode === 3) || 
@@ -218,61 +219,70 @@ const SongSelect = () => {
                 key={i}
                 to="/game"
                 state={{ beatmapId: beatmap.id, beatmapSetId: beatmap.setId, beatmapName: beatmap.name }}
-                className="cursor-pointer hover:underline hover:text-[#934AB3] flex items-center gap-3 w-full pl-4 rounded-r-full hover:bg-purple-500/10 transition-all duration-[600ms]"
+                className="w-full px-4"
                 onMouseEnter={() => handleMouseEnter(beatmap)}
                 onClick={() => { playClickSound(); audioRef.current?.pause(); audioRef.current = null; audioPathRef.current = null; }}
               >
-                <span className="text-[3vh] flex items-center justify-center gap-1">
-                  {beatmap.songInfo.Mode === 1 && <GiDrumKit />}
-                  {beatmap.songInfo.Mode === 3 && (
-                    <>
-                      <GiGrandPiano />
-                      <span className="text-[2vh]">{beatmap.songInfo.CircleSize}K</span>
-                    </>
-                  )}
-                  {beatmap.songInfo.Mode !== 1 && beatmap.songInfo.Mode !== 3 && <VscWarning />}
-                </span>
-                <span>
-                  <span className="font-bold text-[2.4vh] block">
-                    {beatmap.songInfo.Title}
-                  </span>
-                  <span className="text-[1.8vh] block">
-                    by {beatmap.songInfo.Artist}
-                  </span>
-                  <span className="font-bold text-[1.8vh] block">
-                    {beatmap.songInfo.Version}
-                  </span>
-                  <span className="text-[1.8vh] block">
-                    {beatmap.songInfo.StarRating} stars
-                  </span>
-                </span>
+                <div
+                  className="cursor-pointer flex items-center gap-4 w-full rounded-2xl bg-[#1E1E2E]/80 border border-[#313244] shadow-lg hover:bg-[#313244] hover:shadow-xl hover:-translate-y-[2px] transition-all duration-300 p-4"
+                >
+                  <div className="text-[3vh] flex items-center justify-center gap-1 min-w-[4rem]">
+                    {beatmap.songInfo.Mode === 1 && <GiDrumKit />}
+                    {beatmap.songInfo.Mode === 3 && (
+                      <>
+                        <GiGrandPiano />
+                        <span className="text-[2vh]">{beatmap.songInfo.CircleSize}K</span>
+                      </>
+                    )}
+                    {beatmap.songInfo.Mode !== 1 && beatmap.songInfo.Mode !== 3 && <VscWarning />}
+                  </div>
+
+                  <div className="flex flex-col flex-1">
+                    <span className="font-bold text-[2.4vh]">
+                      {beatmap.songInfo.Title}
+                    </span>
+                    <span className="text-[1.8vh] opacity-80">
+                      by {beatmap.songInfo.Artist}
+                    </span>
+                    <span className="font-bold text-[1.8vh] mt-1">
+                      {beatmap.songInfo.Version}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-end min-w-[5rem]">
+                    <span className="text-[1.8vh] font-semibold">
+                      {(beatmap.songInfo.StarRating ?? 0).toFixed(2)}★
+                    </span>
+                  </div>
+                </div>
               </Link>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Top gradient overlay - only covers mapped items */}
-        <div 
-          className="absolute top-0 left-0 w-full h-20 pointer-events-none z-10"
-          style={{
-            background: 'linear-gradient(to bottom, #11111b, transparent)'
-          }}
-        />
-
-        {/* Bottom gradient overlay - only covers mapped items */}
-        <div 
-          className="absolute bottom-0 left-0 w-full h-20 pointer-events-none z-10"
-          style={{
-            background: 'linear-gradient(to top, #11111b, transparent)'
-          }}
-        />
-
-          <div className="absolute w-full h-full flex items-center pointer-events-none">
+          {/* Right: song select artwork (1/3 width) */}
+          <div className="flex items-center justify-center w-1/3 h-full pointer-events-none">
             <img 
               src={text} 
               alt="Text saying 'Select your song!' on the right hand side" 
-              className="fixed right-20 h-1/2"
+              className="max-h-[70%]"
             />
           </div>
+
+          {/* Top gradient overlay - covers mapped items area */}
+          <div 
+            className="absolute top-0 left-0 w-full h-20 pointer-events-none z-10"
+            style={{
+              background: 'linear-gradient(to bottom, #11111b, transparent)'
+            }}
+          />
+
+          {/* Bottom gradient overlay - covers mapped items area */}
+          <div 
+            className="absolute bottom-0 left-0 w-full h-20 pointer-events-none z-10"
+            style={{
+              background: 'linear-gradient(to top, #11111b, transparent)'
+            }}
+          />
         </div>
 
         <Box sx={{ display: 'flex', gap: 2 }}>
