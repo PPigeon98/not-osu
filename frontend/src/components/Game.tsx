@@ -290,6 +290,7 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
               accuracy: displayAccuracy,
               highestCombo: highestCombo,
               scores: userData.Scores[beatmapId],
+              beatmapId: beatmapId,
             },
           });
         }}

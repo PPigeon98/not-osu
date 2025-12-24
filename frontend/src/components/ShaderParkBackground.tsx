@@ -265,8 +265,10 @@ const ShaderParkBackground = ({ audioAnalyser }: ShaderParkBackgroundProps) => {
           if (renderer) {
             renderer.setAnimationLoop(null);
           }
-          if (canvas && canvas.parentNode) {
-            canvas.parentNode.removeChild(canvas);
+          // Remove canvas from body
+          const canvasToRemove = document.getElementById('shader-park-background');
+          if (canvasToRemove && canvasToRemove.parentNode) {
+            canvasToRemove.parentNode.removeChild(canvasToRemove);
           }
           if (geometry) {
             geometry.dispose();

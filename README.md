@@ -14,7 +14,7 @@ Not~Osu! is a web-based rhythm game which provides users with a fun and exciting
 
 - **Programming Languages**: Typescript
 - **Frontend**: React.js, TailwindCSS
-- **Backend**: Typescript
+- **Backend**: Typescript, Express, MongoDB
 
 ## Installation
 
@@ -30,8 +30,17 @@ To run this project locally, follow these steps:
    cd frontend
    npm run dev
    ```
-3. **Run the Backend (in a different terminal)**
+3. **Set up MongoDB (Optional for score syncing)**
+   - Create a MongoDB database (MongoDB Atlas recommended for cloud hosting)
+   - Create a `.env` file in the `api` directory with your MongoDB connection string:
+     ```
+     MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database-name
+     ```
+   - If `MONGODB_URI` is not set, the app will work without database features (localStorage only)
+
+4. **Run the Backend (in a different terminal)**
    ```bash
    cd api
+   npm install
    npm run dev
    ```

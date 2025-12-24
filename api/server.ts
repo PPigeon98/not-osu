@@ -12,6 +12,7 @@ import { createHash } from 'crypto';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import ffmpegPath from 'ffmpeg-static';
+import { MongoClient, Db } from 'mongodb';
 import { echo } from './echo';
 
 const execAsync = promisify(exec);
@@ -33,6 +34,30 @@ app.use(morgan('dev'));
 
 const PORT: number = parseInt(process.env.PORT || '5000');
 const HOST: string = process.env.IP || '127.0.0.1';
+
+// MongoDB connection
+const MONGODB_URI = process.env.MONGODB_URI || '';
+let db: Db | null = null;
+
+const connectToMongoDB = async (): Promise<void> => {
+  if (!MONGODB_URI) {
+    console.warn('MONGODB_URI not set, MongoDB features will be disabled');
+    return;
+  }
+
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    db = client.db();
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    db = null;
+  }
+};
+
+// Connect to MongoDB on startup
+connectToMongoDB();
 
 // In Vercel, write beatmaps into /tmp (the only writable area).
 // Locally, keep using the public/beatmaps* folders so the frontend can read them directly.
@@ -817,6 +842,75 @@ app.get('/api/beatmaps/:setId/:fileName', async (req: Request, res: Response) =>
   } catch (error) {
     console.error('Failed to serve beatmap file:', error);
     res.status(500).json({ error: 'Failed to serve beatmap file' });
+  }
+});
+
+// MongoDB User Data Sync Endpoint
+interface SyncUserDataRequest {
+  username: string;
+  beatmapId: string;
+  score: number;
+  highestCombo: number;
+  accuracy: number;
+}
+
+app.post('/api/user/sync', async (req: Request, res: Response) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { username, beatmapId, score, highestCombo, accuracy }: SyncUserDataRequest = req.body;
+
+    if (!username || !beatmapId || score === undefined || highestCombo === undefined || accuracy === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const usersCollection = db.collection('users');
+    const scoreData = {
+      score,
+      highestCombo,
+      accuracy,
+      beatmapId,
+      timestamp: new Date(),
+    };
+
+    // Upsert user document - create if doesn't exist, update if exists
+    // First, get the user document to check if it exists
+    const existingUser = await usersCollection.findOne({ username });
+    
+    if (existingUser) {
+      // User exists, add score to scores array
+      const updatedScores = [...(existingUser.scores || []), scoreData]
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 100); // Keep top 100 scores
+      
+      await usersCollection.updateOne(
+        { username },
+        {
+          $set: {
+            lastUpdated: new Date(),
+            scores: updatedScores,
+          },
+        }
+      );
+    } else {
+      // User doesn't exist, create new document
+      await usersCollection.insertOne({
+        username,
+        scores: [scoreData],
+        lastUpdated: new Date(),
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Score synced successfully',
+      username,
+    });
+  } catch (error) {
+    console.error('Failed to sync user data:', error);
+    res.status(500).json({ error: 'Failed to sync user data' });
   }
 });
 

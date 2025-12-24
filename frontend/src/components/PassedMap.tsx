@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { type LeaderboardScore } from "./CommonGame";
+import { useState } from "react";
+import { type LeaderboardScore, backendUrl } from "./CommonGame";
 
 const PassedMap = () => {
   const location = useLocation();
@@ -7,13 +8,53 @@ const PassedMap = () => {
     score = 0, 
     accuracy = 0, 
     highestCombo = 0, 
-    scores = [] 
+    scores = [],
+    beatmapId = ""
   } = (location.state as {
     score: number;
     accuracy: number;
     highestCombo: number;
     scores: LeaderboardScore[];
+    beatmapId: string;
   }) || {};
+
+  const [username, setUsername] = useState("guest");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploaded, setIsUploaded] = useState(false);
+  const [showUsernameInput, setShowUsernameInput] = useState(true);
+
+  const handleUpload = async () => {
+    if (!beatmapId || isUploading || isUploaded) return;
+
+    setIsUploading(true);
+    try {
+      const response = await fetch(`${backendUrl}/user/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username.trim() || "guest",
+          beatmapId,
+          score,
+          highestCombo,
+          accuracy,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload score');
+      }
+
+      setIsUploaded(true);
+      setShowUsernameInput(false);
+    } catch (error) {
+      console.error('Error uploading score:', error);
+      alert('Failed to upload score. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const getRank = (accuracy: number) => {
     let rank: string;
@@ -107,6 +148,56 @@ const PassedMap = () => {
       </div>
 
       <div className="flex flex-col gap-4 mb-10">
+        {showUsernameInput && !isUploaded && (
+          <div className="flex flex-col gap-3 items-center">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter username (default: guest)"
+              className="px-4 py-2 rounded-lg text-[#FFFFFF] text-center"
+              style={{ 
+                backgroundColor: '#1a1a2e', 
+                fontSize: '1.5vw', 
+                fontWeight: 'bold',
+                border: '2px solid #333',
+                outline: 'none'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleUpload();
+                }
+              }}
+            />
+            <button
+              onClick={handleUpload}
+              disabled={isUploading || isUploaded}
+              className="px-6 py-3 rounded-lg transition-colors cursor-pointer text-[#FFFFFF] text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                backgroundColor: isUploading ? '#444' : '#11111B', 
+                fontSize: '2vw', 
+                fontWeight: 'bold' 
+              }}
+              onMouseEnter={(e) => {
+                if (!isUploading && !isUploaded) {
+                  e.currentTarget.style.backgroundColor = '#1a1a2e';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isUploading && !isUploaded) {
+                  e.currentTarget.style.backgroundColor = '#11111B';
+                }
+              }}
+            >
+              {isUploading ? 'Uploading...' : 'Upload Score'}
+            </button>
+          </div>
+        )}
+        {isUploaded && (
+          <div className="text-[1.5vw] font-bold text-green-400 mb-2">
+            Score uploaded successfully!
+          </div>
+        )}
         <Link 
           to="/select" 
           className="px-6 py-3 rounded-lg transition-colors cursor-pointer text-[#FFFFFF] text-center"
