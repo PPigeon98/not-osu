@@ -229,6 +229,39 @@ const StartMenu = () => {
     };
   }, []);
 
+  // Update audio volume when MusicVolume changes in localStorage
+  useEffect(() => {
+    const updateVolume = () => {
+      if (audioRef.current) {
+        const stored = localStorage.getItem("userData");
+        if (stored) {
+          const userData = JSON.parse(stored);
+          audioRef.current.volume = userData.MusicVolume / 100;
+        }
+      }
+    };
+
+    // Update volume immediately
+    updateVolume();
+
+    // Listen for storage changes (when settings are updated)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "userData") {
+        updateVolume();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also poll for changes (in case storage event doesn't fire for same-tab updates)
+    const interval = setInterval(updateVolume, 100);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   // Cleanup audio when component unmounts
   useEffect(() => {
     return () => {
