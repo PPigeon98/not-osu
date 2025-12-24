@@ -14,5 +14,21 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
-  }
+  },
+  build: {
+    commonjsOptions: {
+      include: [/shader-park-core/, /node_modules/],
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'shader-park': ['shader-park-core'],
+          'three': ['three'],
+        },
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ['shader-park-core', 'three'],
+  },
 })
