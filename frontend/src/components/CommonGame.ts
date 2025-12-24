@@ -20,6 +20,7 @@ export type LeaderboardScore = {
   score: number;
   highestCombo: number;
   accuracy: number;
+  username?: string;
 };
 
 export type UserData = {

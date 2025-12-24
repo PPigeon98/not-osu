@@ -914,6 +914,61 @@ app.post('/api/user/sync', async (req: Request, res: Response) => {
   }
 });
 
+// Get leaderboard scores for a specific beatmap
+app.get('/api/leaderboard/:beatmapId', async (req: Request, res: Response) => {
+  try {
+    if (!db) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { beatmapId } = req.params;
+
+    if (!beatmapId) {
+      return res.status(400).json({ error: 'Missing beatmapId' });
+    }
+
+    const usersCollection = db.collection('users');
+    
+    // Get all users and their scores for this beatmap
+    const users = await usersCollection.find({}).toArray();
+    
+    // Flatten all scores for this beatmap with username
+    const allScores: Array<{
+      score: number;
+      highestCombo: number;
+      accuracy: number;
+      username: string;
+      timestamp: Date;
+    }> = [];
+    
+    for (const user of users) {
+      if (user.scores && Array.isArray(user.scores)) {
+        for (const scoreEntry of user.scores) {
+          if (scoreEntry.beatmapId === beatmapId) {
+            allScores.push({
+              score: scoreEntry.score,
+              highestCombo: scoreEntry.highestCombo,
+              accuracy: scoreEntry.accuracy,
+              username: user.username || 'guest',
+              timestamp: scoreEntry.timestamp || new Date(),
+            });
+          }
+        }
+      }
+    }
+    
+    // Sort by score descending and return top 100
+    const sortedScores = allScores
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 100);
+
+    res.status(200).json(sortedScores);
+  } catch (error) {
+    console.error('Failed to fetch leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
 // --------------------- ADD NEW ROUTES ABOVE -------------------------
 
 // ====================================================================

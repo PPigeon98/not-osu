@@ -36,6 +36,7 @@ type ScoreEntry = {
   score: number;
   highestCombo: number;
   accuracy: number;
+  username?: string;
 };
 
 type SortType = "Artist" | "Length" | "Title" | "Difficulty";
@@ -117,22 +118,76 @@ const SongSelect = () => {
     }
   };
 
-  const handleMouseEnter = (beatmap: Beatmap) => {
+  const handleMouseEnter = async (beatmap: Beatmap) => {
     playHoverSound();
 
     const stored = localStorage.getItem("userData");
     const userData = stored ? JSON.parse(stored) : InitUserData();
     const musicVolume = userData.MusicVolume / 100;
 
-    // Update leaderboard for hovered beatmap (always update, even if same song)
+    setSelectedBeatmap(beatmap);
+
+    // Fetch leaderboard from MongoDB
     try {
-      const scoresRaw = userData.Scores?.[beatmap.id] ?? [];
-      const scores: ScoreEntry[] = [...scoresRaw].sort((a, b) => b.score - a.score);
-      setSelectedBeatmap(beatmap);
-      setLeaderboard(scores.slice(0, 10));
-    } catch {
-      setSelectedBeatmap(beatmap);
-      setLeaderboard([]);
+      const response = await fetch(`${backendUrl}/leaderboard/${beatmap.id}`);
+      if (response.ok) {
+        const dbScores: ScoreEntry[] = await response.json();
+        
+        // Merge with local scores (add username "guest" to local scores if missing)
+        const localScoresRaw = userData.Scores?.[beatmap.id] ?? [];
+        const localScores: ScoreEntry[] = localScoresRaw.map((score: ScoreEntry) => ({
+          ...score,
+          username: score.username || 'guest',
+        }));
+        
+        // Combine and deduplicate (prefer DB scores, then local)
+        const scoreMap = new Map<string, ScoreEntry>();
+        
+        // Add DB scores first
+        dbScores.forEach(score => {
+          const key = `${score.score}-${score.accuracy}-${score.highestCombo}`;
+          scoreMap.set(key, score);
+        });
+        
+        // Add local scores if not already present
+        localScores.forEach(score => {
+          const key = `${score.score}-${score.accuracy}-${score.highestCombo}`;
+          if (!scoreMap.has(key)) {
+            scoreMap.set(key, score);
+          }
+        });
+        
+        // Sort and limit to top 10
+        const allScores = Array.from(scoreMap.values())
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 10);
+        
+        setLeaderboard(allScores);
+      } else {
+        // Fallback to local scores only
+        const scoresRaw = userData.Scores?.[beatmap.id] ?? [];
+        const scores: ScoreEntry[] = [...scoresRaw]
+          .map((score: ScoreEntry) => ({
+            ...score,
+            username: score.username || 'guest',
+          }))
+          .sort((a, b) => b.score - a.score);
+        setLeaderboard(scores.slice(0, 10));
+      }
+    } catch (error) {
+      // Fallback to local scores only
+      try {
+        const scoresRaw = userData.Scores?.[beatmap.id] ?? [];
+        const scores: ScoreEntry[] = [...scoresRaw]
+          .map((score: ScoreEntry) => ({
+            ...score,
+            username: score.username || 'guest',
+          }))
+          .sort((a, b) => b.score - a.score);
+        setLeaderboard(scores.slice(0, 10));
+      } catch {
+        setLeaderboard([]);
+      }
     }
 
     // Update background image
@@ -402,6 +457,9 @@ const SongSelect = () => {
                       className="flex items-center justify-between text-[1.6vh] py-0.5"
                     >
                       <span className="opacity-80">{idx + 1}.</span>
+                      <span className="flex-1 px-2 text-left truncate" title={entry.username || 'guest'}>
+                        {entry.username || 'guest'}
+                      </span>
                       <span className="flex-1 px-2 text-right">
                         {entry.score.toLocaleString()}
                       </span>

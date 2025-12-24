@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type LeaderboardScore, backendUrl } from "./CommonGame";
 
 const PassedMap = () => {
@@ -8,7 +8,7 @@ const PassedMap = () => {
     score = 0, 
     accuracy = 0, 
     highestCombo = 0, 
-    scores = [],
+    scores: localScores = [],
     beatmapId = ""
   } = (location.state as {
     score: number;
@@ -22,6 +22,75 @@ const PassedMap = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isUploaded, setIsUploaded] = useState(false);
   const [showUsernameInput, setShowUsernameInput] = useState(true);
+  const [displayScores, setDisplayScores] = useState<LeaderboardScore[]>([]);
+
+  // Fetch leaderboard scores from MongoDB when component mounts
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      if (!beatmapId) {
+        // Use local scores with default username
+        const scoresWithUsername = localScores.map(score => ({
+          ...score,
+          username: score.username || 'guest',
+        }));
+        setDisplayScores(scoresWithUsername);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${backendUrl}/leaderboard/${beatmapId}`);
+        if (response.ok) {
+          const dbScores: LeaderboardScore[] = await response.json();
+          
+          // Merge with local scores
+          const localScoresWithUsername = localScores.map(score => ({
+            ...score,
+            username: score.username || 'guest',
+          }));
+          
+          // Combine and deduplicate
+          const scoreMap = new Map<string, LeaderboardScore>();
+          
+          // Add DB scores first
+          dbScores.forEach(score => {
+            const key = `${score.score}-${score.accuracy}-${score.highestCombo}`;
+            scoreMap.set(key, score);
+          });
+          
+          // Add local scores if not already present
+          localScoresWithUsername.forEach(score => {
+            const key = `${score.score}-${score.accuracy}-${score.highestCombo}`;
+            if (!scoreMap.has(key)) {
+              scoreMap.set(key, score);
+            }
+          });
+          
+          // Sort and limit to top 5
+          const allScores = Array.from(scoreMap.values())
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5);
+          
+          setDisplayScores(allScores);
+        } else {
+          // Fallback to local scores
+          const scoresWithUsername = localScores.map(score => ({
+            ...score,
+            username: score.username || 'guest',
+          }));
+          setDisplayScores(scoresWithUsername);
+        }
+      } catch (error) {
+        // Fallback to local scores
+        const scoresWithUsername = localScores.map(score => ({
+          ...score,
+          username: score.username || 'guest',
+        }));
+        setDisplayScores(scoresWithUsername);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [beatmapId, localScores]);
 
   const handleUpload = async () => {
     if (!beatmapId || isUploading || isUploaded) return;
@@ -48,6 +117,53 @@ const PassedMap = () => {
 
       setIsUploaded(true);
       setShowUsernameInput(false);
+      
+      // Refresh leaderboard after successful upload
+      const fetchLeaderboard = async () => {
+        if (!beatmapId) return;
+        
+        try {
+          const response = await fetch(`${backendUrl}/leaderboard/${beatmapId}`);
+          if (response.ok) {
+            const dbScores: LeaderboardScore[] = await response.json();
+            
+            // Merge with local scores from location.state
+            const currentLocalScores = (location.state as any)?.scores || [];
+            const localScoresWithUsername = currentLocalScores.map((score: LeaderboardScore) => ({
+              ...score,
+              username: score.username || 'guest',
+            }));
+            
+            // Combine and deduplicate
+            const scoreMap = new Map<string, LeaderboardScore>();
+            
+            // Add DB scores first
+            dbScores.forEach(score => {
+              const key = `${score.score}-${score.accuracy}-${score.highestCombo}`;
+              scoreMap.set(key, score);
+            });
+            
+            // Add local scores if not already present
+            localScoresWithUsername.forEach((score: LeaderboardScore) => {
+              const key = `${score.score}-${score.accuracy}-${score.highestCombo}`;
+              if (!scoreMap.has(key)) {
+                scoreMap.set(key, score);
+              }
+            });
+            
+            // Sort and limit to top 5
+            const allScores = Array.from(scoreMap.values())
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 5);
+            
+            setDisplayScores(allScores);
+          }
+        } catch (error) {
+          console.error('Error refreshing leaderboard:', error);
+        }
+      };
+      
+      fetchLeaderboard();
     } catch (error) {
       console.error('Error uploading score:', error);
       alert('Failed to upload score. Please try again.');
@@ -116,10 +232,7 @@ const PassedMap = () => {
 
         <div className="flex flex-col w-full gap-4 justify-center items-center mb-8 text-[1.5vw] font-bold">
           <span>Top Scores</span>
-          {[...scores]
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5)
-            .map((leaderboardScore, i) => {
+          {displayScores.map((leaderboardScore, i) => {
               const { rank, rankColor } = getRank(leaderboardScore.accuracy);
 
               return (
@@ -133,8 +246,11 @@ const PassedMap = () => {
                       : ""
                   }`}
                 >
-                  <div className="flex gap-5">
+                  <div className="flex gap-5 items-center">
                     <span>{i + 1}</span>
+                    <span className="opacity-80 text-[1.2vw]">
+                      {leaderboardScore.username || 'guest'}
+                    </span>
                     <span className="opacity-60">
                       {leaderboardScore.score.toLocaleString()}
                     </span>
