@@ -204,6 +204,16 @@ const Game = ({ songInfo, userData, mapPath, hitObjects }: GameProps) => {
     }
   }, []);
 
+  // Cleanup audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (musicTime.current) {
+        musicTime.current.pause();
+        musicTime.current = null;
+      }
+    };
+  }, []);
+
   if (songInfo['Mode'] === 1 || songInfo['Mode'] === '1') {
     TaikoRenderer({
       songInfo,

@@ -59,6 +59,17 @@ const SongSelect = () => {
     fetchBeatmaps();
   }, []);
 
+  // Cleanup audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      audioPathRef.current = null;
+    };
+  }, []);
+
   const fetchBeatmaps = async () => {
     try {
       const response = await fetch(`${backendUrl}/beatmaps`);
@@ -276,7 +287,15 @@ const SongSelect = () => {
                 state={{ beatmapId: beatmap.id, beatmapSetId: beatmap.setId, beatmapName: beatmap.name }}
                 className="w-full px-4"
                 onMouseEnter={() => handleMouseEnter(beatmap)}
-                onClick={() => { playClickSound(); audioRef.current?.pause(); audioRef.current = null; audioPathRef.current = null; }}
+                onClick={() => {
+                  playClickSound();
+                  // Stop preview audio before navigating to game
+                  if (audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current = null;
+                  }
+                  audioPathRef.current = null;
+                }}
               >
                 <div
                   className="cursor-pointer flex items-center gap-4 w-full rounded-2xl bg-[#1E1E2E]/80 border border-[#313244] shadow-lg hover:bg-[#313244] hover:shadow-xl hover:-translate-y-[2px] transition-all duration-300 p-4"
