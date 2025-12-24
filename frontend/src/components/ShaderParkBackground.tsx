@@ -18,11 +18,10 @@ const shaderCodeDev = `
   sphere(0.5 + n*.5);
 `;
 
-// Shader code for production/Vercel (no input() - uses time-based animation)
+// Shader code for production/Vercel (no input(), no mouse - uses time-based animation only)
 const shaderCodeProd = `
-  displace(mouse.x, mouse.y, 0);
   setMaxIterations(5);
-  // Use time for animation since input() isn't available in production
+  // Use time for animation since input() and mouse aren't available in production
   let audio = time * 0.1;
   let pointerDown = 0.0;
   let n = noise(getSpace() + vec3(0, 0, audio) + noise(getRayDirection()*4+audio));
