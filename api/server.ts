@@ -71,14 +71,16 @@ const BEATMAPS_RAW_DIR = IS_VERCEL
 // Parsed beatmaps (.wysi, song.mp3, bg.*)
 const BEATMAPS_PARSED_DIR_PUBLIC = path.resolve(__dirname, '../frontend/public/beatmaps');
 const BEATMAPS_PARSED_DIR_TMP = path.resolve('/tmp/beatmaps');
+const BEATMAPS_PARSED_DIR_ROOT = path.resolve(__dirname, '../beatmaps');
 
 // Primary parsed-dir used for writing new beatmaps
 const BEATMAPS_PARSED_DIR = IS_VERCEL ? BEATMAPS_PARSED_DIR_TMP : BEATMAPS_PARSED_DIR_PUBLIC;
 
 // Directories we read from when listing beatmaps (SongSelect should see both)
+// Include root/beatmaps folder for local beatmaps
 const BEATMAPS_PARSED_DIRS = IS_VERCEL
-  ? [BEATMAPS_PARSED_DIR_PUBLIC, BEATMAPS_PARSED_DIR_TMP]
-  : [BEATMAPS_PARSED_DIR_PUBLIC];
+  ? [BEATMAPS_PARSED_DIR_PUBLIC, BEATMAPS_PARSED_DIR_TMP, BEATMAPS_PARSED_DIR_ROOT]
+  : [BEATMAPS_PARSED_DIR_PUBLIC, BEATMAPS_PARSED_DIR_ROOT];
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
