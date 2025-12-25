@@ -64,14 +64,17 @@ connectToMongoDB();
 const IS_VERCEL = process.env.VERCEL === '1';
 
 // Where raw .osz contents are extracted
+const PROJECT_ROOT_FOR_RAW = IS_VERCEL ? process.cwd() : path.resolve(__dirname, '..');
 const BEATMAPS_RAW_DIR = IS_VERCEL
   ? path.resolve('/tmp/beatmapsRaw')
-  : path.resolve(__dirname, '../frontend/public/beatmapsRaw');
+  : path.resolve(PROJECT_ROOT_FOR_RAW, 'frontend/public/beatmapsRaw');
 
 // Parsed beatmaps (.wysi, song.mp3, bg.*)
-const BEATMAPS_PARSED_DIR_PUBLIC = path.resolve(__dirname, '../frontend/public/beatmaps');
+// On Vercel, use process.cwd() to get project root since __dirname points to the function directory
+const PROJECT_ROOT = IS_VERCEL ? process.cwd() : path.resolve(__dirname, '..');
+const BEATMAPS_PARSED_DIR_PUBLIC = path.resolve(PROJECT_ROOT, 'frontend/public/beatmaps');
 const BEATMAPS_PARSED_DIR_TMP = path.resolve('/tmp/beatmaps');
-const BEATMAPS_PARSED_DIR_ROOT = path.resolve(__dirname, '../beatmaps');
+const BEATMAPS_PARSED_DIR_ROOT = path.resolve(PROJECT_ROOT, 'beatmaps');
 
 // Primary parsed-dir used for writing new beatmaps
 const BEATMAPS_PARSED_DIR = IS_VERCEL ? BEATMAPS_PARSED_DIR_TMP : BEATMAPS_PARSED_DIR_PUBLIC;
@@ -674,18 +677,36 @@ app.get('/api/beatmaps', async (req: Request, res: Response) => {
     // On Vercel this will include both /tmp/beatmaps and public/beatmaps.
     let wysiFiles: string[] = [];
 
+    console.log(`[api/beatmaps] IS_VERCEL: ${IS_VERCEL}`);
+    console.log(`[api/beatmaps] __dirname: ${__dirname}`);
+    console.log(`[api/beatmaps] Checking directories: ${BEATMAPS_PARSED_DIRS.join(', ')}`);
+
     for (const dir of BEATMAPS_PARSED_DIRS) {
       try {
+        // Check if directory exists
+        try {
+          await fs.promises.access(dir);
+          console.log(`[api/beatmaps] Directory exists: ${dir}`);
+        } catch {
+          console.warn(`[api/beatmaps] Directory does not exist: ${dir}`);
+          continue;
+        }
+
         const dirFiles = await fg('**/*.wysi', { cwd: dir, absolute: true });
+        console.log(`[api/beatmaps] Found ${dirFiles.length} .wysi files in ${dir}`);
+        if (dirFiles.length > 0) {
+          console.log(`[api/beatmaps] Sample files: ${dirFiles.slice(0, 3).join(', ')}`);
+        }
         wysiFiles = wysiFiles.concat(dirFiles);
       } catch (error) {
         // Ignore missing directories etc., just log for debugging.
-        console.warn(`Failed to read beatmaps from ${dir}:`, error);
+        console.warn(`[api/beatmaps] Failed to read beatmaps from ${dir}:`, error);
       }
     }
 
     // De-duplicate paths in case directories overlap
     const uniqueFiles = Array.from(new Set(wysiFiles));
+    console.log(`[api/beatmaps] Total unique .wysi files: ${uniqueFiles.length}`);
 
     const beatmaps = await Promise.all(
       uniqueFiles.map(async (filePath) => {
@@ -708,9 +729,14 @@ app.get('/api/beatmaps', async (req: Request, res: Response) => {
       })
     );
 
+    // Set cache control headers - no cache for dynamic content
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     res.status(200).json(beatmaps);
   } catch (error) {
-    console.error('Failed to fetch beatmaps:', error);
+    console.error('[api/beatmaps] Failed to fetch beatmaps:', error);
     res.status(500).json({ error: 'Failed to fetch beatmaps' });
   }
 });
